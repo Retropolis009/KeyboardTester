@@ -68,19 +68,17 @@ function renderAdSlot(slotKey, settings, slotsMap) {
   } else {
     innerHtml = `
       <div class="ad-preview-box" style="min-height:${minH}px">
-        <div class="ad-preview-badge">Google AdSense Ready Slot &bull; Zero-CLS Reserved (${minH}px)</div>
+        <div class="ad-preview-badge">AdSense Unit Slot [${escapeHtml(slot.slot_key)}] &mdash; CLS Height Reserved (${minH}px)</div>
         <div class="ad-preview-meta">
-          <span>Slot: <code>${escapeHtml(slot.slot_key)}</code></span>
-          <span>Unit ID: <code>${escapeHtml(slot.ad_unit_id || 'pending')}</code></span>
-          <span>Format: <code>${escapeHtml(slot.ad_format || 'auto')}</code></span>
+          Unit ID: <code>${escapeHtml(slot.ad_unit_id || 'pending')}</code> &middot; Format: <code>${escapeHtml(slot.ad_format || 'auto')}</code>
         </div>
       </div>
     `;
   }
 
   return `
-    <aside class="ad-slot-wrapper" data-ad-slot-key="${escapeHtml(slot.slot_key)}" style="min-height:${minH + 24}px" aria-label="Advertisement">
-      <div class="ad-disclosure-label">Advertisement</div>
+    <aside class="ad-slot-wrapper" data-ad-slot-key="${escapeHtml(slot.slot_key)}" style="min-height:${minH + 22}px" aria-label="Advertisement">
+      <div class="ad-disclosure-label">Sponsored / Advertisement</div>
       ${innerHtml}
     </aside>
   `;
@@ -96,11 +94,8 @@ function renderFaqSection(faqs) {
   `).join('\n');
 
   return `
-    <section class="seo-faq-section container" id="faq" aria-labelledby="faq-heading">
-      <div class="section-head">
-        <span class="eyebrow-tag">Hardware Knowledge Base</span>
-        <h2 id="faq-heading">Frequently Asked Questions</h2>
-      </div>
+    <section class="seo-faq-section" id="faq" aria-labelledby="faq-heading">
+      <h2 id="faq-heading">Technical FAQ</h2>
       <div class="faq-list">
         ${items}
       </div>
@@ -108,19 +103,106 @@ function renderFaqSection(faqs) {
   `;
 }
 
-function buildNavHtml(currentPath) {
+function buildSidebarHtml(currentPath, settings) {
+  const siteName = settings.site_name || 'KeyPulse';
   const modules = db.prepare(`
-    SELECT module_key, name, route_path, badge
+    SELECT module_key, name, route_path
     FROM feature_modules
     WHERE enabled = 1
     ORDER BY nav_order ASC
   `).all();
 
-  return modules.map((m) => {
+  const linksHtml = modules.map((m) => {
     const active = currentPath === m.route_path || (m.route_path !== '/' && currentPath.startsWith(m.route_path));
-    const badgeHtml = m.badge ? `<span class="nav-pill">${escapeHtml(m.badge)}</span>` : '';
-    return `<a href="${escapeHtml(m.route_path)}" class="nav-link${active ? ' active' : ''}">${escapeHtml(m.name)}${badgeHtml}</a>`;
-  }).join('\n');
+    return `<li><a href="${escapeHtml(m.route_path)}" class="side-link${active ? ' active' : ''}">${escapeHtml(m.name)}</a></li>`;
+  }).join('\n          ');
+
+  const infoRoutes = [
+    { path: '/about', label: 'About Bench' },
+    { path: '/contact', label: 'Contact' },
+    { path: '/privacy-policy', label: 'Privacy Policy' },
+    { path: '/terms', label: 'Terms of Use' }
+  ];
+  const infoHtml = infoRoutes.map((r) => {
+    const active = currentPath === r.path;
+    return `<li><a href="${r.path}" class="side-link side-link-sub${active ? ' active' : ''}">${r.label}</a></li>`;
+  }).join('\n          ');
+
+  return `
+  <aside class="app-sidebar" aria-label="Hardware Diagnostic Tools">
+    <div class="sidebar-top">
+      <div class="sidebar-brand-row">
+        <a href="/" class="brand-mark" aria-label="${escapeHtml(siteName)} Home">
+          <span class="brand-glyph">KP</span>
+          <span class="brand-text">${escapeHtml(siteName)}</span>
+        </a>
+        <button type="button" id="btn-mobile-menu" class="mobile-menu-btn" aria-label="Toggle Menu">Menu</button>
+      </div>
+      <div class="sidebar-subline">Hardware Diagnostic Bench</div>
+    </div>
+
+    <div class="sidebar-body" id="sidebar-collapsible">
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">Diagnostics &amp; Tests</div>
+        <ul class="sidebar-list">
+          ${linksHtml}
+        </ul>
+      </div>
+
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">Reference &amp; Legal</div>
+        <ul class="sidebar-list">
+          ${infoHtml}
+        </ul>
+      </div>
+
+      <div class="sidebar-footer-controls">
+        <button type="button" id="btn-theme-toggle" class="util-btn">Switch to Light</button>
+        <a href="#" id="btn-reopen-consent" class="cookie-link">Cookie Settings</a>
+      </div>
+    </div>
+  </aside>`;
+}
+
+function buildFooterHtml(settings) {
+  const siteName = settings.site_name || 'KeyPulse';
+  return `
+  <footer class="site-footer">
+    <div class="footer-columns">
+      <div>
+        <strong>${escapeHtml(siteName)} Hardware Bench</strong>
+        <p>Local browser-executed diagnostics for keyboards, mechanical switches, mice, controllers, monitors, microphones, speakers, and webcams. Zero hardware input leaves your device.</p>
+      </div>
+      <div>
+        <strong>Input &amp; Controller Tools</strong>
+        <ul>
+          <li><a href="/">Online Keyboard Tester</a></li>
+          <li><a href="/chatter-analyzer">Switch Chatter Analyzer</a></li>
+          <li><a href="/mouse-cps-test">Mouse Polling Hz &amp; CPS</a></li>
+          <li><a href="/gamepad-test">Gamepad &amp; Stick Drift Test</a></li>
+        </ul>
+      </div>
+      <div>
+        <strong>Display, Media &amp; Speed</strong>
+        <ul>
+          <li><a href="/display-test">Monitor Dead Pixel &amp; Hz Test</a></li>
+          <li><a href="/audio-video-test">Mic, Speaker &amp; Webcam Test</a></li>
+          <li><a href="/typing-test">Typing Speed (WPM)</a></li>
+          <li><a href="/guides">Hardware Repair Guides</a></li>
+        </ul>
+      </div>
+      <div>
+        <strong>Site &amp; Compliance</strong>
+        <ul>
+          <li><a href="/about">About</a></li>
+          <li><a href="/contact">Contact</a></li>
+          <li><a href="/privacy-policy">Privacy &amp; Cookies</a></li>
+          <li><a href="/terms">Terms of Service</a></li>
+          <li><a href="/sitemap.xml">XML Sitemap</a> &middot; <a href="/ads.txt">ads.txt</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>`;
 }
 
 function buildSeoHead({ seoPage, settings, baseUrl, routePath, extraSchema = null }) {
@@ -142,7 +224,6 @@ function buildSeoHead({ seoPage, settings, baseUrl, routePath, extraSchema = nul
     faqs = [];
   }
 
-  // Structured Data Graph (@graph) for Rich Search Results
   const graph = [];
   try {
     if (settings.organization_schema_json) {
@@ -152,7 +233,6 @@ function buildSeoHead({ seoPage, settings, baseUrl, routePath, extraSchema = nul
     }
   } catch (_) {}
 
-  // BreadcrumbList Schema
   const crumbs = [
     {
       '@type': 'ListItem',
@@ -175,7 +255,6 @@ function buildSeoHead({ seoPage, settings, baseUrl, routePath, extraSchema = nul
     itemListElement: crumbs
   });
 
-  // Primary Page / WebApplication Schema
   if (extraSchema) {
     graph.push(extraSchema);
   } else if (seoPage.schema_type === 'WebApplication') {
@@ -186,7 +265,7 @@ function buildSeoHead({ seoPage, settings, baseUrl, routePath, extraSchema = nul
       url: canonical,
       applicationCategory: 'UtilitiesApplication',
       operatingSystem: 'Windows, macOS, Linux, ChromeOS, iOS, Android',
-      browserRequirements: 'Requires HTML5 KeyboardEvent support',
+      browserRequirements: 'HTML5',
       offers: {
         '@type': 'Offer',
         price: '0',
@@ -204,7 +283,6 @@ function buildSeoHead({ seoPage, settings, baseUrl, routePath, extraSchema = nul
     });
   }
 
-  // FAQPage Rich Snippet Schema
   if (Array.isArray(faqs) && faqs.length > 0) {
     graph.push({
       '@context': 'https://schema.org',
@@ -231,7 +309,6 @@ function buildSeoHead({ seoPage, settings, baseUrl, routePath, extraSchema = nul
     verifications.push(`<meta name="yandex-verification" content="${escapeHtml(settings.yandex_verification)}">`);
   }
 
-  // Consent Mode v2 + Google AdSense + GA4 Head Scripts
   const scripts = [];
   if (settings.consent_banner_enabled === 'true') {
     scripts.push(`
@@ -296,7 +373,7 @@ function buildSeoHead({ seoPage, settings, baseUrl, routePath, extraSchema = nul
   <meta name="twitter:title" content="${escapeHtml(ogTitle)}">
   <meta name="twitter:description" content="${escapeHtml(ogDesc)}">
   <meta name="twitter:image" content="${escapeHtml(ogImage)}">
-  <meta name="theme-color" content="#0b0f17">
+  <meta name="theme-color" content="#141619">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   ${verifications.join('\n  ')}
   <link rel="stylesheet" href="/css/main.css">
@@ -336,19 +413,20 @@ function renderTemplatePage({ viewFile, routePath, req, seoOverride = null, repl
   for (const s of allSlots) slotsMap[s.slot_key] = s;
 
   const headHtml = buildSeoHead({ seoPage, settings, baseUrl, routePath, extraSchema });
-  const navHtml = buildNavHtml(routePath);
+  const sidebarHtml = buildSidebarHtml(routePath, settings);
+  const footerHtml = buildFooterHtml(settings);
   const faqHtml = renderFaqSection(faqs);
 
   const consentBannerHtml = settings.consent_banner_enabled === 'true' ? `
     <div id="cookie-consent-banner" class="consent-banner hidden" role="dialog" aria-label="Cookie and Advertising Consent">
       <div class="consent-inner">
         <div class="consent-copy">
-          <strong>Privacy &amp; AdSense Cookie Preferences</strong>
-          <p>KeyPulse processes all keystrokes locally in your browser. We use cookies for anonymous Core Web Vitals and Google AdSense ad personalization. Read our <a href="/privacy-policy">Privacy Policy</a>.</p>
+          <strong>Cookie &amp; AdSense Preferences:</strong>
+          <span>Hardware diagnostics run 100% locally. Cookies are used for aggregate Core Web Vitals and Google AdSense. See <a href="/privacy-policy">Privacy Policy</a>.</span>
         </div>
         <div class="consent-actions">
-          <button type="button" id="btn-consent-decline" class="btn btn-ghost btn-sm">Essential Only</button>
-          <button type="button" id="btn-consent-accept" class="btn btn-primary btn-sm">Accept All</button>
+          <button type="button" id="btn-consent-decline" class="btn">Essential Only</button>
+          <button type="button" id="btn-consent-accept" class="btn btn-primary">Accept</button>
         </div>
       </div>
     </div>
@@ -358,12 +436,12 @@ function renderTemplatePage({ viewFile, routePath, req, seoOverride = null, repl
 
   let html = rawHtml
     .replace('<!--SEO_HEAD-->', headHtml)
-    .replace('<!--DYNAMIC_NAV-->', navHtml)
+    .replace('<!--SIDEBAR_SHELL-->', sidebarHtml)
+    .replace('<!--SITE_FOOTER-->', footerHtml)
     .replace('<!--SEO_FAQ_SECTION-->', faqHtml)
     .replace('<!--CONSENT_BANNER-->', consentBannerHtml)
     .replace('<!--BODY_ATTRS-->', adblockNoticeFlag);
 
-  // Inject AdSense placements
   html = html.replace(/<!--AD_SLOT:([a-zA-Z0-9_]+)-->/g, (_, slotKey) => {
     return renderAdSlot(slotKey, settings, slotsMap);
   });
@@ -375,10 +453,6 @@ function renderTemplatePage({ viewFile, routePath, req, seoOverride = null, repl
   return html;
 }
 
-/**
- * Heavy On-Page Technical & Content SEO Auditor
- * Evaluates rendered HTML against 14 search-ranking signals and computes a 0–100 score.
- */
 function auditHtmlContent({ html, routePath, focusKeyword = '', title = '', metaDescription = '' }) {
   const checks = [];
   let earnedPoints = 0;
@@ -401,19 +475,17 @@ function auditHtmlContent({ html, routePath, focusKeyword = '', title = '', meta
   const wordCount = words.length;
   const kw = (focusKeyword || '').trim().toLowerCase();
 
-  // 1. Title Tag Length (45–65 chars ideal for Google SERP ~580px)
   const titleLen = title.trim().length;
   const approxTitlePx = Math.round(titleLen * 9.2);
   addCheck(
     'title_length',
-    'Title Tag SERP Length (45–66 chars)',
+    'Title Tag SERP Length (40–68 chars)',
     titleLen >= 40 && titleLen <= 68,
     10,
     `${titleLen} chars (~${approxTitlePx}px est.)`,
-    'Keep title between 45 and 65 characters so Google does not truncate or rewrite it.'
+    'Keep title between 45 and 65 characters so Google does not truncate it.'
   );
 
-  // 2. Focus Keyword in Title
   if (kw) {
     addCheck(
       'kw_in_title',
@@ -425,18 +497,16 @@ function auditHtmlContent({ html, routePath, focusKeyword = '', title = '', meta
     );
   }
 
-  // 3. Meta Description Length (120–165 chars)
   const descLen = metaDescription.trim().length;
   addCheck(
     'meta_desc_length',
-    'Meta Description Length (115–165 chars)',
+    'Meta Description Length (115–168 chars)',
     descLen >= 115 && descLen <= 168,
     9,
     `${descLen} characters`,
-    'Write an actionable 120–160 character description to maximize SERP click-through rate (CTR).'
+    'Write an actionable 120–160 character description to maximize SERP CTR.'
   );
 
-  // 4. Focus Keyword in Meta Description
   if (kw) {
     addCheck(
       'kw_in_desc',
@@ -444,11 +514,10 @@ function auditHtmlContent({ html, routePath, focusKeyword = '', title = '', meta
       metaDescription.toLowerCase().includes(kw),
       7,
       metaDescription.toLowerCase().includes(kw) ? 'Matched (bolded in Google snippet)' : 'Keyword not found in meta description',
-      'Include the primary keyword naturally in the meta description so Google bolds matching query terms.'
+      'Include the primary keyword naturally in the meta description.'
     );
   }
 
-  // 5. Exactly One H1 Tag
   const h1Matches = [...html.matchAll(/<h1[^>]*>([\s\S]*?)<\/h1>/gi)].map((m) =>
     m[1].replace(/<[^>]+>/g, '').trim()
   );
@@ -461,7 +530,6 @@ function auditHtmlContent({ html, routePath, focusKeyword = '', title = '', meta
     'Ensure every indexable landing page has exactly one clear H1 heading.'
   );
 
-  // 6. Focus Keyword in H1 or H2
   const h2Matches = [...html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)].map((m) =>
     m[1].replace(/<[^>]+>/g, '').trim()
   );
@@ -477,27 +545,24 @@ function auditHtmlContent({ html, routePath, focusKeyword = '', title = '', meta
     );
   }
 
-  // 7. Subheading Hierarchy (H2 depth)
   addCheck(
     'h2_structure',
     'Rich Subheading Structure (2+ H2 sections)',
     h2Matches.length >= 2,
     6,
     `${h2Matches.length} <h2> sections found`,
-    'Break diagnostic tools and guides into scannable H2/H3 topical sections for Google Passage Ranking.'
+    'Break diagnostic tools and guides into scannable H2/H3 topical sections.'
   );
 
-  // 8. Indexable Content Depth
   addCheck(
     'word_count',
     'Indexable Semantic Copy Depth (250+ words)',
     wordCount >= 250,
     9,
     `${wordCount} indexable words`,
-    'Pair interactive tools with helpful troubleshooting copy and FAQs so crawlers see rich topical depth.'
+    'Pair interactive tools with helpful troubleshooting copy and FAQs.'
   );
 
-  // 9. Canonical Link Present
   const hasCanonical = /<link\s+rel=["']canonical["']\s+href=["'][^"']+["']/i.test(html);
   addCheck(
     'canonical_tag',
@@ -508,9 +573,8 @@ function auditHtmlContent({ html, routePath, focusKeyword = '', title = '', meta
     'Always specify a canonical URL to prevent duplicate query-string indexing dilution.'
   );
 
-  // 10. Structured Data JSON-LD
   const ldMatches = [...html.matchAll(/<script\s+type=["']application\/ld\+json["']>([\s\S]*?)<\/script>/gi)];
-  let validSchemaTypes = [];
+  const validSchemaTypes = [];
   for (const m of ldMatches) {
     try {
       const parsed = JSON.parse(m[1]);
@@ -526,10 +590,9 @@ function auditHtmlContent({ html, routePath, focusKeyword = '', title = '', meta
     validSchemaTypes.length > 0,
     9,
     validSchemaTypes.length > 0 ? `Schemas: ${validSchemaTypes.join(', ')}` : 'No valid JSON-LD schema found',
-    'Add WebApplication, BreadcrumbList, and FAQPage JSON-LD to win expanded SERP real estate.'
+    'Add WebApplication, BreadcrumbList, and FAQPage JSON-LD.'
   );
 
-  // 11. Open Graph & Twitter Card Completeness
   const hasOg = /property=["']og:title["']/i.test(html) && /property=["']og:description["']/i.test(html) && /name=["']twitter:card["']/i.test(html);
   addCheck(
     'social_meta',
@@ -537,10 +600,9 @@ function auditHtmlContent({ html, routePath, focusKeyword = '', title = '', meta
     hasOg,
     5,
     hasOg ? 'Complete OG + Twitter tags' : 'Incomplete social metadata',
-    'Configure Open Graph title, description, and image to improve social share CTR.'
+    'Configure Open Graph title, description, and image.'
   );
 
-  // 12. Internal Linking Architecture
   const hrefs = [...html.matchAll(/<a\s+[^>]*href=["']([^"'#]+)["']/gi)].map((m) => m[1]);
   const internalLinks = hrefs.filter((h) => h.startsWith('/'));
   addCheck(
@@ -549,10 +611,9 @@ function auditHtmlContent({ html, routePath, focusKeyword = '', title = '', meta
     internalLinks.length >= 4,
     5,
     `${internalLinks.length} internal crawlable links`,
-    'Cross-link related diagnostic tools and hardware guides to distribute PageRank.'
+    'Cross-link related diagnostic tools and hardware guides.'
   );
 
-  // 13. Image Alt Attribute Accessibility
   const imgTags = [...html.matchAll(/<img\b[^>]*>/gi)].map((m) => m[0]);
   const missingAlt = imgTags.filter((tag) => !/\balt=["'][^"']*["']/i.test(tag));
   addCheck(
@@ -564,7 +625,6 @@ function auditHtmlContent({ html, routePath, focusKeyword = '', title = '', meta
     'Ensure every <img> element includes descriptive alt text.'
   );
 
-  // 14. Zero-CLS AdSense Reservation Check
   const adWrappers = [...html.matchAll(/class=["'][^"']*ad-slot-wrapper[^"']*["'][^>]*style=["'][^"']*min-height:/gi)];
   const rawAdWrappers = [...html.matchAll(/class=["'][^"']*ad-slot-wrapper/gi)];
   addCheck(
@@ -573,10 +633,9 @@ function auditHtmlContent({ html, routePath, focusKeyword = '', title = '', meta
     rawAdWrappers.length === adWrappers.length,
     2,
     `${adWrappers.length} ad containers protected with explicit min-height`,
-    'Reserve minimum heights on all ad slots to keep Cumulative Layout Shift (CLS) near 0.00.'
+    'Reserve minimum heights on all ad slots to keep CLS near 0.00.'
   );
 
-  // Keyword occurrences & density
   let keywordOccurrences = 0;
   if (kw) {
     const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

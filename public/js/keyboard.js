@@ -2,7 +2,6 @@
   const mount = document.getElementById('keyboard-mount');
   if (!mount) return;
 
-  // Helper key builders
   const k = (code, label, u = 1, sub = '') => ({ code, label, u, sub });
   const sp = (u = 0.25) => ({ spacer: true, u });
 
@@ -166,12 +165,12 @@
     ]
   ];
 
-  // State
   const isMac = /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent);
   let currentLayout = isMac ? 'mac' : 'full_ansi';
   let soundProfile = 'mute';
   let captureShortcuts = true;
   const CHATTER_THRESHOLD_MS = 32;
+  const STUCK_HOLD_MS = 4000;
 
   const activeKeys = new Set();
   const testedCodes = new Set();
@@ -179,12 +178,18 @@
   const lastReleaseTime = new Map();
   const pressStartTime = new Map();
   const chatterCodes = new Set();
+  const stuckCodes = new Set();
   let chatterFaultCount = 0;
   let maxRollover = 0;
   let totalKeystrokes = 0;
   const keyHistory = [];
 
-  // Audio Synthesizer (Zero External Audio Dependencies)
+  // Scan / polling-rate estimation from timestamp deltas of real hardware events
+  const scanDeltas = [];
+  let fastestDelta = null;
+  let lastEventStamp = null;
+
+  // ---------------- Audio ----------------
   let audioCtx = null;
   function playSwitchSound(profile, isUp = false) {
     if (profile === 'mute') return;
@@ -213,7 +218,6 @@
         gain.gain.setValueAtTime(isUp ? 0.04 : 0.09, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
       } else {
-        // Linear Thock
         osc.type = 'sine';
         osc.frequency.setValueAtTime(isUp ? 260 : 340, now);
         osc.frequency.exponentialRampToValueAtTime(95, now + 0.04);
@@ -228,6 +232,7 @@
     } catch (_) {}
   }
 
+  // ---------------- Rendering ----------------
   function buildRowEl(items, extraClass = '') {
     const rowEl = document.createElement('div');
     rowEl.className = `kb-row ${extraClass}`.trim();
@@ -235,7 +240,7 @@
       if (item.spacer) {
         const spEl = document.createElement('div');
         spEl.className = 'kb-spacer';
-        spEl.style.width = `calc(${item.u} * 48px + (${item.u} - 1) * 6px)`;
+        spEl.style.width = `calc(${item.u} * var(--u-size) + (${item.u} - 1) * var(--k-gap))`;
         rowEl.appendChild(spEl);
       } else {
         const keyEl = document.createElement('div');
@@ -247,7 +252,10 @@
           <span class="k-primary">${item.label}</span>
           <span class="k-count"></span>
         `;
-        keyEl.addEventListener('mousedown', () => simulateKey(item.code, item.label, true));
+        keyEl.addEventListener('mousedown', () => {
+          simulateKey(item.code, item.label, true);
+          updateLocationReadout({ key: item.label, code: item.code, location: 'pointer' });
+        });
         keyEl.addEventListener('mouseup', () => simulateKey(item.code, item.label, false));
         keyEl.addEventListener('mouseleave', () => {
           if (activeKeys.has(item.code)) simulateKey(item.code, item.label, false);
@@ -262,6 +270,9 @@
     mount.innerHTML = '';
     const chassis = document.createElement('div');
     chassis.className = 'keyboard-chassis';
+    if (currentLayout === 'mini_60' || currentLayout === 'compact_75') {
+      chassis.classList.add('compact-deck');
+    }
 
     if (currentLayout === 'compact_75') {
       const sec = document.createElement('div');
@@ -284,7 +295,6 @@
       rows60.forEach((r) => sec.appendChild(buildRowEl(r)));
       chassis.appendChild(sec);
     } else {
-      // Main Section (ANSI, ISO, TKL, or Mac)
       const mainSec = document.createElement('div');
       mainSec.className = 'kb-section';
       mainSec.appendChild(buildRowEl(FN_ROW_STD, 'fn-row'));
@@ -294,18 +304,15 @@
       mainMatrix.forEach((r) => mainSec.appendChild(buildRowEl(r)));
       chassis.appendChild(mainSec);
 
-      // Navigation Section
       const navSec = document.createElement('div');
       navSec.className = 'kb-section';
       navSec.appendChild(buildRowEl(NAV_CLUSTER.fnRow, 'fn-row'));
       NAV_CLUSTER.rows.forEach((r) => navSec.appendChild(buildRowEl(r)));
       chassis.appendChild(navSec);
 
-      // Numpad Section (Full ANSI, ISO, Mac Full)
       if (currentLayout !== 'tkl_87') {
         const numSec = document.createElement('div');
         numSec.className = 'kb-section';
-        // Empty spacer aligned with Fn row
         const fnSpacer = document.createElement('div');
         fnSpacer.className = 'kb-row fn-row';
         numSec.appendChild(fnSpacer);
@@ -339,9 +346,7 @@
 
   function getLayoutUniqueCodes() {
     const codes = new Set();
-    mount.querySelectorAll('.keycap[data-code]').forEach((el) => {
-      codes.add(el.dataset.code);
-    });
+    mount.querySelectorAll('.keycap[data-code]').forEach((el) => codes.add(el.dataset.code));
     return codes;
   }
 
@@ -351,6 +356,7 @@
       el.classList.toggle('pressed', activeKeys.has(code));
       el.classList.toggle('tested', testedCodes.has(code));
       el.classList.toggle('chatter', chatterCodes.has(code));
+      el.classList.toggle('stuck', stuckCodes.has(code));
       const cntEl = el.querySelector('.k-count');
       const count = pressCounts.get(code) || 0;
       if (cntEl) cntEl.textContent = count > 0 ? String(count) : '';
@@ -358,12 +364,10 @@
   }
 
   function syncAllKeyStates() {
-    mount.querySelectorAll('.keycap[data-code]').forEach((el) => {
-      syncKeyElement(el.dataset.code);
-    });
+    mount.querySelectorAll('.keycap[data-code]').forEach((el) => syncKeyElement(el.dataset.code));
   }
 
-  // Telemetry DOM Nodes
+  // ---------------- Readouts ----------------
   const elLastKey = document.getElementById('stat-last-key');
   const elEventCode = document.getElementById('stat-event-code');
   const elRollover = document.getElementById('stat-nkro');
@@ -371,6 +375,53 @@
   const elHoldMs = document.getElementById('stat-hold-ms');
   const elChatter = document.getElementById('stat-chatter-count');
   const elStream = document.getElementById('key-history-stream');
+  const elPollHz = document.getElementById('stat-poll-hz');
+  const elLocation = document.getElementById('stat-key-location');
+  const elStuck = document.getElementById('stat-stuck');
+  const ledCaps = document.getElementById('led-caps');
+  const ledNum = document.getElementById('led-num');
+  const ledScroll = document.getElementById('led-scroll');
+  const exportStatus = document.getElementById('export-status');
+
+  const LOCATION_NAMES = { 0: 'Standard', 1: 'Left', 2: 'Right', 3: 'Numpad' };
+
+  function estimatePollHz() {
+    if (fastestDelta === null || fastestDelta <= 0) return null;
+    const raw = 1000 / fastestDelta;
+    const buckets = [125, 250, 500, 1000, 2000, 4000, 8000];
+    let closest = buckets[0];
+    for (const b of buckets) {
+      if (Math.abs(b - raw) < Math.abs(closest - raw)) closest = b;
+    }
+    return { hz: closest, raw: Math.round(raw), minDelta: Number(fastestDelta.toFixed(3)) };
+  }
+
+  function updatePollReadout() {
+    if (!elPollHz) return;
+    const est = estimatePollHz();
+    if (!est) {
+      elPollHz.textContent = 'Sampling…';
+      elPollHz.className = 'readout-val';
+      return;
+    }
+    elPollHz.textContent = `~${est.hz} Hz`;
+    elPollHz.className = 'readout-val active';
+    elPollHz.title = `Fastest observed key-event delta: ${est.minDelta} ms (raw estimate ${est.raw} Hz)`;
+  }
+
+  function updateLocationReadout(info) {
+    if (!elLocation || !info) return;
+    const loc = LOCATION_NAMES[info.location] || (typeof info.location === 'string' ? info.location : 'Standard');
+    elLocation.textContent = `${info.key === ' ' ? 'Space' : info.key} · ${loc}`;
+  }
+
+  function updateLockLeds(e) {
+    try {
+      if (ledCaps) ledCaps.classList.toggle('on', !!e.getModifierState('CapsLock'));
+      if (ledNum) ledNum.classList.toggle('on', !!e.getModifierState('NumLock'));
+      if (ledScroll) ledScroll.classList.toggle('on', !!e.getModifierState('ScrollLock'));
+    } catch (_) {}
+  }
 
   function updateTelemetryReadouts(extra = {}) {
     if (extra.keyLabel !== undefined && elLastKey) {
@@ -395,9 +446,14 @@
       elHoldMs.textContent = `${extra.holdMs} ms`;
     }
     if (elChatter) {
-      elChatter.textContent = chatterFaultCount === 0 ? '0 Clean' : `${chatterFaultCount} Bounce!`;
-      elChatter.className = `telemetry-value ${chatterFaultCount > 0 ? 'warn' : 'good'}`;
+      elChatter.textContent = chatterFaultCount === 0 ? '0 Clean' : `${chatterFaultCount} Bounce`;
+      elChatter.className = `readout-val ${chatterFaultCount > 0 ? 'fault' : 'pass'}`;
     }
+    if (elStuck) {
+      elStuck.textContent = stuckCodes.size === 0 ? 'None' : `${stuckCodes.size} Held > 4s`;
+      elStuck.className = `readout-val ${stuckCodes.size > 0 ? 'fault' : 'pass'}`;
+    }
+    updatePollReadout();
   }
 
   function pushStreamChip(label, code, chattered, deltaMs) {
@@ -407,11 +463,16 @@
     elStream.innerHTML = keyHistory.map((item) => {
       const text = item.label === ' ' ? 'Space' : item.label;
       const badge = item.chattered ? ` ⚠ ${item.deltaMs}ms` : '';
-      return `<span class="stream-chip${item.chattered ? ' chatter-flag' : ''}">${text.replace(/</g, '&lt;')}${badge}</span>`;
+      const safe = String(text).replace(/</g, '&lt;');
+      return `<span class="tape-token${item.chattered ? ' chatter-flag' : ''}">${safe}${badge}</span>`;
     }).join('');
   }
 
-  function handlePress(code, keyLabel, keyCode, nowMs) {
+  // ---------------- Event handling ----------------
+  let stuckTimer = null;
+
+  function handlePress(code, keyLabel, keyCode, nowMs, location) {
+    if (activeKeys.has(code)) return;
     const prevUp = lastReleaseTime.get(code);
     let chattered = false;
     let deltaMs = 0;
@@ -427,7 +488,6 @@
 
     activeKeys.add(code);
     if (activeKeys.size > maxRollover) maxRollover = activeKeys.size;
-
     testedCodes.add(code);
     totalKeystrokes++;
     pressCounts.set(code, (pressCounts.get(code) || 0) + 1);
@@ -441,11 +501,12 @@
 
   function handleRelease(code, nowMs) {
     const started = pressStartTime.get(code);
-    let holdMs = undefined;
+    let holdMs;
     if (started !== undefined) {
       holdMs = Math.max(1, Math.round(nowMs - started));
     }
     activeKeys.delete(code);
+    stuckCodes.delete(code);
     lastReleaseTime.set(code, nowMs);
     playSwitchSound(soundProfile, true);
     syncKeyElement(code);
@@ -455,40 +516,52 @@
   function simulateKey(code, label, isDown) {
     const now = performance.now();
     if (isDown) {
-      if (!activeKeys.has(code)) handlePress(code, label, null, now);
+      handlePress(code, label, null, now, 0);
+      updateLocationReadout({ key: label, code, location: 'pointer' });
     } else {
       handleRelease(code, now);
     }
   }
 
-  window.addEventListener('keydown', (e) => {
+  function onHardwareKeyDown(e) {
     const tag = (e.target && e.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (captureShortcuts) e.preventDefault();
+    updateLockLeds(e);
+    if (e.repeat) return;
 
-    if (captureShortcuts) {
-      e.preventDefault();
+    // Polling-rate sampling: delta between consecutive discrete hardware events
+    const stamp = typeof e.timeStamp === 'number' && e.timeStamp > 0 ? e.timeStamp : performance.now();
+    if (lastEventStamp !== null) {
+      const d = stamp - lastEventStamp;
+      if (d > 0.05 && d < 200) {
+        scanDeltas.push(d);
+        if (scanDeltas.length > 400) scanDeltas.shift();
+        if (fastestDelta === null || d < fastestDelta) fastestDelta = d;
+      }
     }
+    lastEventStamp = stamp;
 
-    if (e.repeat) return; // Ignore OS auto-repeat so real switch chatter is measured accurately
     const code = e.code || `KeyCode_${e.keyCode}`;
-    handlePress(code, e.key, e.keyCode, performance.now());
-  });
+    handlePress(code, e.key, e.keyCode, performance.now(), e.location);
+    updateLocationReadout({ key: e.key, code, location: e.location });
+  }
 
-  window.addEventListener('keyup', (e) => {
+  function onHardwareKeyUp(e) {
     const tag = (e.target && e.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-
-    if (captureShortcuts) {
-      e.preventDefault();
-    }
+    if (captureShortcuts) e.preventDefault();
+    updateLockLeds(e);
     const code = e.code || `KeyCode_${e.keyCode}`;
-    // macOS CapsLock / PrintScreen quirk: ensure tested state even if keydown was swallowed
     if (!testedCodes.has(code)) {
       testedCodes.add(code);
       pressCounts.set(code, (pressCounts.get(code) || 0) + 1);
     }
     handleRelease(code, performance.now());
-  });
+  }
+
+  window.addEventListener('keydown', onHardwareKeyDown);
+  window.addEventListener('keyup', onHardwareKeyUp);
 
   window.addEventListener('contextmenu', (e) => {
     if (captureShortcuts && e.target && e.target.closest('.keyboard-chassis')) {
@@ -496,14 +569,126 @@
     }
   });
 
-  // Clear stuck held keys if user Alt-Tabs out of browser window
   window.addEventListener('blur', () => {
     activeKeys.clear();
+    stuckCodes.clear();
     syncAllKeyStates();
     updateTelemetryReadouts();
   });
 
-  // Toolbar Bindings
+  // Stuck-key watchdog: flags any key held longer than 4 seconds
+  stuckTimer = setInterval(() => {
+    if (activeKeys.size === 0) {
+      if (stuckCodes.size > 0) {
+        stuckCodes.clear();
+        syncAllKeyStates();
+        updateTelemetryReadouts();
+      }
+      return;
+    }
+    const now = performance.now();
+    let changed = false;
+    activeKeys.forEach((code) => {
+      const started = pressStartTime.get(code);
+      if (started !== undefined && now - started > STUCK_HOLD_MS && !stuckCodes.has(code)) {
+        stuckCodes.add(code);
+        changed = true;
+      }
+    });
+    if (changed) {
+      syncAllKeyStates();
+      if (elHoldMs) elHoldMs.textContent = `>${STUCK_HOLD_MS} ms (stuck?)`;
+      updateTelemetryReadouts();
+    }
+  }, 500);
+
+  // ---------------- Diagnostic report export ----------------
+  function buildReportObject() {
+    const layoutCodes = getLayoutUniqueCodes();
+    const testedInLayout = [...layoutCodes].filter((c) => testedCodes.has(c));
+    const est = estimatePollHz();
+    return {
+      generatedAt: new Date().toISOString(),
+      tool: 'KeyPulse Online Keyboard Tester',
+      layout: currentLayout,
+      userAgent: navigator.userAgent,
+      platform: navigator.platform || 'unknown',
+      summary: {
+        keysInLayout: layoutCodes.size,
+        keysTested: testedInLayout.length,
+        coveragePercent: layoutCodes.size ? Math.round((testedInLayout.length / layoutCodes.size) * 100) : 0,
+        totalKeystrokes,
+        peakRollover: maxRollover,
+        chatterEvents: chatterFaultCount,
+        estimatedScanRateHz: est ? est.hz : null
+      },
+      chatterKeys: [...chatterCodes],
+      keys: [...layoutCodes].sort().map((code) => ({
+        code,
+        presses: pressCounts.get(code) || 0,
+        tested: testedCodes.has(code),
+        chatter: chatterCodes.has(code)
+      }))
+    };
+  }
+
+  function downloadBlob(filename, content, type) {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    if (exportStatus) {
+      exportStatus.textContent = `Saved ${filename}`;
+      setTimeout(() => { exportStatus.textContent = ''; }, 4000);
+    }
+  }
+
+  function buildReportText(report) {
+    const lines = [
+      'KeyPulse Hardware Diagnostic Report',
+      '==================================',
+      `Generated : ${report.generatedAt}`,
+      `Layout    : ${report.layout}`,
+      `Platform  : ${report.platform}`,
+      '',
+      `Keys in layout   : ${report.summary.keysInLayout}`,
+      `Keys tested      : ${report.summary.keysTested} (${report.summary.coveragePercent}%)`,
+      `Total keystrokes : ${report.summary.totalKeystrokes}`,
+      `Peak rollover    : ${report.summary.peakRollover}`,
+      `Chatter events   : ${report.summary.chatterEvents}`,
+      `Scan rate (est.) : ${report.summary.estimatedScanRateHz ? `~${report.summary.estimatedScanRateHz} Hz` : 'n/a'}`,
+      '',
+      'Failed / untested keys:',
+      ...(report.keys.filter((k) => !k.tested).map((k) => `  [ ] ${k.code}`))
+    ];
+    if (report.chatterKeys.length) {
+      lines.push('', 'Chatter detected on:', ...report.chatterKeys.map((c) => `  ! ${c}`));
+    }
+    return lines.join('\n');
+  }
+
+  const exportJsonBtn = document.getElementById('btn-export-json');
+  if (exportJsonBtn) {
+    exportJsonBtn.addEventListener('click', () => {
+      const report = buildReportObject();
+      downloadBlob(`keypulse-keyboard-${Date.now()}.json`, JSON.stringify(report, null, 2), 'application/json');
+    });
+  }
+
+  const exportTxtBtn = document.getElementById('btn-export-txt');
+  if (exportTxtBtn) {
+    exportTxtBtn.addEventListener('click', () => {
+      const report = buildReportObject();
+      downloadBlob(`keypulse-keyboard-${Date.now()}.txt`, buildReportText(report), 'text/plain');
+    });
+  }
+
+  // ---------------- Toolbar bindings ----------------
   const layoutSelect = document.getElementById('select-kb-layout');
   if (layoutSelect) {
     layoutSelect.value = currentLayout;
@@ -517,6 +702,7 @@
   if (soundSelect) {
     soundSelect.addEventListener('change', () => {
       soundProfile = soundSelect.value;
+      if (soundProfile !== 'mute') playSwitchSound(soundProfile, false);
     });
   }
 
@@ -537,20 +723,26 @@
       lastReleaseTime.clear();
       pressStartTime.clear();
       chatterCodes.clear();
+      stuckCodes.clear();
       chatterFaultCount = 0;
       maxRollover = 0;
       totalKeystrokes = 0;
       keyHistory.length = 0;
+      scanDeltas.length = 0;
+      fastestDelta = null;
+      lastEventStamp = null;
       if (elStream) {
-        elStream.innerHTML = '<span class="stream-placeholder">Press any physical key on your keyboard to begin real-time diagnostics...</span>';
+        elStream.innerHTML = '<span class="tape-empty">Press any physical key on your keyboard to begin real-time diagnostics…</span>';
       }
       if (elLastKey) elLastKey.textContent = 'Ready';
       if (elEventCode) elEventCode.textContent = '—';
       if (elHoldMs) elHoldMs.textContent = '0 ms';
+      if (elLocation) elLocation.textContent = '—';
       syncAllKeyStates();
       updateTelemetryReadouts();
     });
   }
 
   renderKeyboard();
+  updateLocationReadout({ key: '—', code: '—', location: 0 });
 })();

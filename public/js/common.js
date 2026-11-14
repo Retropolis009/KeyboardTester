@@ -9,7 +9,7 @@
   function syncThemeLabel() {
     if (!themeBtn) return;
     const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-    themeBtn.textContent = isLight ? 'Dark Bench' : 'Light Bench';
+    themeBtn.textContent = isLight ? 'Theme: Light (Switch Dark)' : 'Theme: Dark (Switch Light)';
   }
   syncThemeLabel();
 
@@ -24,6 +24,15 @@
         localStorage.setItem('kp_theme', 'light');
       }
       syncThemeLabel();
+    });
+  }
+
+  // Mobile Sidebar Toggle
+  const mobileMenuBtn = document.getElementById('btn-mobile-menu');
+  const sidebarBody = document.getElementById('sidebar-collapsible');
+  if (mobileMenuBtn && sidebarBody) {
+    mobileMenuBtn.addEventListener('click', () => {
+      sidebarBody.classList.toggle('open');
     });
   }
 
@@ -93,7 +102,7 @@
     });
   }
 
-  // 4. Core Web Vitals Beacon (TTFB, LCP, CLS) for SEO Ranking Diagnostics
+  // 4. Core Web Vitals Beacon (TTFB, LCP, CLS)
   function sendVital(metric, value) {
     fetch('/api/vitals', {
       method: 'POST',

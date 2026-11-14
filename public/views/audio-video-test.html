@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--SEO_HEAD-->
+</head>
+<body <!--BODY_ATTRS-->>
+<div class="app-shell">
+  <!--SIDEBAR_SHELL-->
+
+  <main class="app-workspace">
+    <div class="page-header">
+      <h1>Mic &amp; Webcam Test Online — Waveform, Stereo &amp; Camera Check</h1>
+      <p>Inspect your microphone with a live oscilloscope and dB peak meter, sweep left and right speakers with generated tones, and verify camera resolution and frame rate. Audio and video never leave this tab.</p>
+    </div>
+
+    <!--AD_SLOT:top_leaderboard-->
+
+    <div class="readout-grid">
+      <div class="readout-cell">
+        <span class="readout-label">Mic Status</span>
+        <span class="readout-val" id="stat-mic-status">Idle</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Peak Level</span>
+        <span class="readout-val" id="stat-mic-db">−∞ dBFS</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Signal Health</span>
+        <span class="readout-val pass" id="stat-mic-health">Silent</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Camera</span>
+        <span class="readout-val" id="stat-cam-status">Idle</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Camera Resolution</span>
+        <span class="readout-val" id="stat-cam-res">—</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Camera FPS</span>
+        <span class="readout-val" id="stat-cam-fps">—</span>
+      </div>
+    </div>
+
+    <section class="bench-panel">
+      <h2 style="margin:0 0 10px;font-size:1rem">Microphone Oscilloscope &amp; Peak Meter</h2>
+      <div class="control-bar" style="margin-bottom:10px">
+        <div class="control-inline-set">
+          <label for="select-mic">Input device</label>
+          <select id="select-mic" class="control-select">
+            <option value="">Default microphone</option>
+          </select>
+        </div>
+        <div class="control-inline-set">
+          <button type="button" id="btn-mic-start" class="btn btn-primary">Start Microphone</button>
+          <button type="button" id="btn-mic-stop" class="btn btn-danger">Stop</button>
+        </div>
+      </div>
+      <canvas id="mic-oscilloscope" class="scope-canvas" aria-label="Live microphone waveform"></canvas>
+      <div class="readout-label" style="margin-top:10px">Peak level — <span id="mic-db-text">−∞ dBFS</span></div>
+      <div class="meter-track"><div class="meter-fill" id="mic-level-meter"></div></div>
+      <p style="font-size:0.82rem;color:var(--text-dim);margin:8px 0 0">Speak at normal volume. A healthy headset peaks between −18&nbsp;dBFS and −6&nbsp;dBFS. A meter pinned at −60&nbsp;dBFS means the OS has muted or the wrong input is selected; clipping near 0&nbsp;dBFS means the input gain is too high.</p>
+    </section>
+
+    <div class="bench-grid-2">
+      <section class="bench-panel">
+        <h2 style="margin:0 0 10px;font-size:1rem">Stereo Speaker Test</h2>
+        <div class="control-inline-set" style="margin-bottom:10px">
+          <button type="button" class="btn" data-tone="left" data-freq="440">Left Channel (440 Hz)</button>
+          <button type="button" class="btn" data-tone="right" data-freq="440">Right Channel (440 Hz)</button>
+          <button type="button" class="btn" data-tone="both" data-freq="440">Both (Centred)</button>
+          <button type="button" class="btn btn-danger" id="btn-tone-stop">Stop Tone</button>
+        </div>
+        <div class="field-group">
+          <label for="select-tone-freq">Frequency sweep</label>
+          <select id="select-tone-freq" class="control-select">
+            <option value="220">220 Hz — low bass</option>
+            <option value="440" selected>440 Hz — reference A</option>
+            <option value="1000">1 kHz — midrange</option>
+            <option value="4000">4 kHz — presence</option>
+            <option value="10000">10 kHz — treble</option>
+          </select>
+        </div>
+        <p style="font-size:0.82rem;color:var(--text-dim);margin:8px 0 0">Phase inversion and wiring faults show up as a hollow, distant centre image. If the centred test sounds thin but one channel alone sounds full, the speakers are wired out of phase or the 3.5&nbsp;mm plug is half-seated.</p>
+      </section>
+
+      <section class="bench-panel">
+        <h2 style="margin:0 0 10px;font-size:1rem">Webcam Frame Rate &amp; Resolution</h2>
+        <div class="control-inline-set" style="margin-bottom:10px">
+          <button type="button" id="btn-cam-start" class="btn btn-primary">Start Camera</button>
+          <button type="button" id="btn-cam-stop" class="btn btn-danger">Stop Camera</button>
+        </div>
+        <video id="webcam-preview" class="webcam-stage" autoplay muted playsinline style="height:190px"></video>
+        <p style="font-size:0.82rem;color:var(--text-dim);margin:8px 0 0">Resolution is read from the actual video track settings, and FPS is counted from <code>requestVideoFrameCallback</code> where supported. Motion blur or a stuck frame indicates a driver or USB bandwidth problem.</p>
+      </section>
+    </div>
+
+    <!--AD_SLOT:mid_incontent-->
+
+    <div class="content-split-grid">
+      <article class="doc-section">
+        <h2>Running a Private Mic and Webcam Test Online</h2>
+        <p>A <strong>mic and webcam test online</strong> only works well when it is honest about where your data goes. KeyPulse requests the microphone and camera through <code>getUserMedia</code>, routes the stream into a Web Audio analyser and a local <code>&lt;video&gt;</code> element, and never uploads a byte. Closing the tab or pressing Stop releases the device immediately, and the browser's own indicator light is the ground truth that capture has ended.</p>
+        <p>Start with the oscilloscope: a flat line at silence that reacts to speech confirms the device is live. If the meter never moves, the browser may be using a different default input than the one you expect — pick the device explicitly from the input selector. Headset microphones often expose separate "communications" and "music" endpoints.</p>
+
+        <h2>Interpreting the dBFS Peak Meter</h2>
+        <p>dBFS is decibels relative to full scale, so 0&nbsp;dBFS is digital clipping. Speech that peaks around −18 to −6&nbsp;dBFS transcribes well in calls and leaves headroom for loud moments. A signal that clips carries harsh distortion no noise gate can repair, while a signal hovering near −55&nbsp;dBFS will sound muffled to everyone else. The health readout summarises the last second of samples into Silent, Healthy, Hot, or Clipping.</p>
+
+        <h2>Stereo Speaker Sweeps and Camera Frame Rates</h2>
+        <p>The tone generator uses an oscillator with a stereo panner, so a left-only tone proves the left speaker and left channel of the cable independently. A camera that reports 1920×1080 but only 15&nbsp;FPS is usually limited by USB 2.0 bandwidth or by another application holding an exclusive lock. Compare findings with the <a href="/display-test">monitor refresh-rate test</a>, the <a href="/gamepad-test">gamepad drift tester</a>, the <a href="/mouse-cps-test">mouse polling tester</a>, and the <a href="/guides">hardware repair guides</a>.</p>
+      </article>
+
+      <aside>
+        <div class="rail-box">
+          <h3>Related Diagnostics</h3>
+          <ul>
+            <li><a href="/display-test">Dead Pixel &amp; Refresh Hz</a></li>
+            <li><a href="/gamepad-test">Gamepad Drift Tester</a></li>
+            <li><a href="/">Online Keyboard Tester</a></li>
+            <li><a href="/mouse-cps-test">Mouse Polling Hz &amp; CPS</a></li>
+            <li><a href="/guides">Hardware Repair Guides</a></li>
+          </ul>
+        </div>
+        <!--AD_SLOT:sidebar_rectangle-->
+      </aside>
+    </div>
+
+    <!--SEO_FAQ_SECTION-->
+    <!--AD_SLOT:footer_multiplex-->
+    <!--SITE_FOOTER-->
+  </main>
+</div>
+
+<!--CONSENT_BANNER-->
+<script src="/js/common.js" defer></script>
+<script src="/js/audiovideo.js" defer></script>
+</body>
+</html>

@@ -4,200 +4,156 @@
 <!--SEO_HEAD-->
 </head>
 <body <!--BODY_ATTRS-->>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="/" class="brand-logo" aria-label="KeyPulse Home">
-        <span class="brand-keycap">K</span>
-        <span>KeyPulse</span>
-      </a>
-      <nav class="main-nav" aria-label="Primary Diagnostic Tools">
-        <!--DYNAMIC_NAV-->
-      </nav>
-      <div class="header-utils">
-        <button type="button" id="btn-theme-toggle" class="btn btn-sm btn-ghost">Light Bench</button>
-        <a href="/admin" class="btn btn-sm">Admin</a>
+<div class="app-shell">
+  <!--SIDEBAR_SHELL-->
+
+  <main class="app-workspace">
+    <div class="page-header">
+      <h1>Online Keyboard Tester &amp; NKRO Switch Diagnostic</h1>
+      <p>Press any key on your laptop, mechanical, Windows, or Mac keyboard to verify stuck switches, N-key rollover ghosting, scan rate, and contact chatter — everything runs locally in your browser.</p>
+    </div>
+
+    <!--AD_SLOT:top_leaderboard-->
+
+    <div class="readout-grid" role="region" aria-label="Live keystroke telemetry">
+      <div class="readout-cell">
+        <span class="readout-label">Last Key</span>
+        <span class="readout-val active" id="stat-last-key">Ready</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Scan Code</span>
+        <span class="readout-val" id="stat-event-code">—</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Key Location</span>
+        <span class="readout-val" id="stat-key-location">—</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Rollover (NKRO)</span>
+        <span class="readout-val" id="stat-nkro">0 Active / 0 Peak</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Keys Verified</span>
+        <span class="readout-val pass" id="stat-tested-progress">0/104 (0%)</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Hold Duration</span>
+        <span class="readout-val" id="stat-hold-ms">0 ms</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Switch Chatter &lt;32ms</span>
+        <span class="readout-val pass" id="stat-chatter-count">0 Clean</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Scan Rate (est.)</span>
+        <span class="readout-val" id="stat-poll-hz">Sampling…</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Stuck Keys</span>
+        <span class="readout-val pass" id="stat-stuck">None</span>
       </div>
     </div>
-  </header>
 
-  <main>
-    <div class="container">
-      <!--AD_SLOT:top_leaderboard-->
+    <div class="control-bar">
+      <div class="control-inline-set">
+        <label for="select-kb-layout">Form factor</label>
+        <select id="select-kb-layout" class="control-select">
+          <option value="full_ansi">Full-Size 104-Key (ANSI)</option>
+          <option value="tkl_87">Tenkeyless 87-Key (TKL)</option>
+          <option value="compact_75">Compact 75% (84-Key)</option>
+          <option value="mini_60">Mini 60% (61-Key)</option>
+          <option value="mac">Apple Mac Layout</option>
+          <option value="iso_105">ISO 105-Key (UK / EU)</option>
+        </select>
 
-      <section class="tool-hero" aria-labelledby="main-tool-h1">
-        <div class="hero-top-row">
-          <div class="hero-title-group">
-            <span class="eyebrow-tag">Zero-Install Browser Hardware Bench</span>
-            <h1 id="main-tool-h1">Online Keyboard Tester &amp; NKRO Switch Diagnostic</h1>
-            <p>Press any key on your physical laptop, mechanical, Windows, or Mac keyboard to test stuck switches, N-key rollover ghosting, and contact bounce instantly.</p>
-          </div>
-        </div>
+        <label for="select-switch-sound">Switch audio</label>
+        <select id="select-switch-sound" class="control-select">
+          <option value="mute">Silent</option>
+          <option value="clicky">MX Blue (Clicky)</option>
+          <option value="tactile">MX Brown (Tactile)</option>
+          <option value="linear">Topre (Linear)</option>
+        </select>
 
-        <!-- Live Hardware Telemetry Strip -->
-        <div class="telemetry-strip" role="region" aria-label="Live Keystroke Telemetry">
-          <div class="telemetry-card">
-            <span class="telemetry-label">Last Key Pressed</span>
-            <span class="telemetry-value accent" id="stat-last-key">Ready</span>
-          </div>
-          <div class="telemetry-card">
-            <span class="telemetry-label">DOM Scan Code</span>
-            <span class="telemetry-value" id="stat-event-code">—</span>
-          </div>
-          <div class="telemetry-card">
-            <span class="telemetry-label">Rollover (NKRO)</span>
-            <span class="telemetry-value" id="stat-nkro">0 Active / 0 Peak</span>
-          </div>
-          <div class="telemetry-card">
-            <span class="telemetry-label">Keys Verified</span>
-            <span class="telemetry-value good" id="stat-tested-progress">0/104 (0%)</span>
-          </div>
-          <div class="telemetry-card">
-            <span class="telemetry-label">Hold Duration</span>
-            <span class="telemetry-value" id="stat-hold-ms">0 ms</span>
-          </div>
-          <div class="telemetry-card">
-            <span class="telemetry-label">Switch Chatter (&lt;32ms)</span>
-            <span class="telemetry-value good" id="stat-chatter-count">0 Clean</span>
-          </div>
-        </div>
-
-        <!-- Workbench Controls -->
-        <div class="workbench-toolbar">
-          <div class="toolbar-group">
-            <label for="select-kb-layout">Form Factor:</label>
-            <select id="select-kb-layout" class="control-select">
-              <option value="full_ansi">Full-Size 104-Key (ANSI)</option>
-              <option value="tkl_87">Tenkeyless 87-Key (TKL)</option>
-              <option value="compact_75">Compact 75% (84-Key Laptop/Custom)</option>
-              <option value="mini_60">Mini 60% (61-Key Enthusiast)</option>
-              <option value="mac">Apple Mac Magic Keyboard</option>
-              <option value="iso_105">ISO 105-Key (UK / European)</option>
-            </select>
-
-            <label for="select-switch-sound">Switch Audio:</label>
-            <select id="select-switch-sound" class="control-select">
-              <option value="mute">Silent (Off)</option>
-              <option value="clicky">Cherry MX Blue (Clicky)</option>
-              <option value="tactile">MX Brown (Tactile)</option>
-              <option value="linear">Topre / Linear Thock</option>
-            </select>
-          </div>
-
-          <div class="toolbar-group">
-            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
-              <input type="checkbox" id="chk-lock-shortcuts" checked>
-              Capture Tab / F-Keys / Space
-            </label>
-            <button type="button" id="btn-reset-keyboard" class="btn btn-sm btn-danger">Reset Tested Keys</button>
-          </div>
-        </div>
-
-        <!-- Live Keystroke History Tape -->
-        <div class="key-history-stream key-stream-bar" id="key-history-stream" aria-live="polite">
-          <span class="stream-placeholder">Press any physical key on your keyboard to begin real-time diagnostics...</span>
-        </div>
-
-        <!-- Physical Interactive Keyboard Deck -->
-        <div class="keyboard-scroll-frame">
-          <div id="keyboard-mount"></div>
-        </div>
-
-        <div class="kb-legend-bar">
-          <div class="legend-items">
-            <span><i class="legend-dot" style="background:var(--key-top);border:1px solid var(--key-border)"></i>Untested Key</span>
-            <span><i class="legend-dot" style="background:var(--accent-cyan)"></i>Currently Held (Active)</span>
-            <span><i class="legend-dot" style="background:var(--accent-emerald)"></i>Verified Working</span>
-            <span><i class="legend-dot" style="background:var(--accent-danger)"></i>Switch Chatter Detected (&lt;32ms)</span>
-          </div>
-          <span>100% Browser-Local Processing &bull; Zero Keystrokes Sent to Server</span>
-        </div>
-      </section>
-
-      <!--AD_SLOT:mid_incontent-->
-
-      <!-- Rich Topical SEO Copy + Sidebar AdSense Rail -->
-      <div class="seo-content-grid">
-        <article class="prose-card">
-          <h2>Why Use an Online Keyboard Tester for Mechanical &amp; Laptop Keyboards?</h2>
-          <p>Whether you just assembled a custom hot-swap mechanical keyboard, spilled liquid near a laptop palm rest, or noticed intermittent missed inputs in competitive games, an <strong>online keyboard tester</strong> lets you verify every physical switch matrix position in seconds without downloading untrusted executable utilities.</p>
-          <p>KeyPulse listens directly to high-resolution browser <code>KeyboardEvent.code</code> hardware scan codes rather than character layouts alone. That means left and right modifiers (<code>ShiftLeft</code> vs. <code>ShiftRight</code>, <code>ControlLeft</code> vs. <code>ControlRight</code>, <code>Alt</code>/<code>Option</code>, and <code>Win</code>/<code>Command</code>) as well as dedicated Numpad digits register independently on the visual deck.</p>
-
-          <h2>Testing N-Key Rollover (NKRO), Ghosting &amp; Matrix Blocking</h2>
-          <p>Budget office keyboards route switches across shared membrane sheets without per-key diodes, limiting simultaneous inputs to 2-key or 6-key rollover (6KRO). Hold multiple keys together on our tester and watch the <strong>Rollover (NKRO)</strong> counter in the top ribbon to confirm your gaming or stenography keyboard supports unrestricted simultaneous actuation. Read our deep-dive on <a href="/guides/nkro-vs-6kro-keyboard-ghosting-explained">NKRO vs. 6KRO keyboard ghosting</a>.</p>
-
-          <h2>Automatic Switch Chatter &amp; Double-Typing Detection</h2>
-          <p>Aging copper contact leaves or ultra-aggressive 1ms firmware debounce settings can cause a single press to fire duplicate characters within 5 to 30 milliseconds. Every keycap on KeyPulse includes an integrated bounce monitor and actuation counter—and for granular switch repair, you can open our dedicated <a href="/chatter-analyzer">Switch Chatter Lab</a>, benchmark speed on the <a href="/typing-test">Typing Speed WPM Test</a>, or inspect microswitches on the <a href="/mouse-cps-test">Mouse &amp; CPS Tester</a>.</p>
-        </article>
-
-        <aside class="sidebar-rail">
-          <!--AD_SLOT:sidebar_rectangle-->
-
-          <div class="rail-widget">
-            <h3>Diagnostic Suite</h3>
-            <ul class="rail-links">
-              <li><a href="/typing-test">Typing Speed &amp; WPM Test</a></li>
-              <li><a href="/chatter-analyzer">Mechanical Switch Chatter Lab</a></li>
-              <li><a href="/mouse-cps-test">Mouse Double-Click &amp; CPS Test</a></li>
-              <li><a href="/guides/how-to-fix-mechanical-keyboard-key-chatter">How to Fix Key Chatter Guide</a></li>
-              <li><a href="/guides/laptop-keyboard-keys-not-working-troubleshooting">Laptop Dead Key Checklist</a></li>
-            </ul>
-          </div>
-        </aside>
+        <span class="led-cluster" aria-label="Keyboard lock LEDs">
+          <span class="led-indicator" id="led-caps">CAPS</span><span class="led-indicator" id="led-num">NUM</span><span class="led-indicator" id="led-scroll">SCRL</span>
+        </span>
       </div>
+
+      <div class="control-inline-set">
+        <label><input type="checkbox" id="chk-lock-shortcuts" checked> Capture Tab / F-Keys</label>
+        <button type="button" id="btn-export-json" class="btn">Export JSON</button>
+        <button type="button" id="btn-export-txt" class="btn">Export TXT</button>
+        <button type="button" id="btn-reset-keyboard" class="btn btn-danger">Reset</button>
+        <span id="export-status" class="readout-label"></span>
+      </div>
+    </div>
+
+    <div class="key-tape" id="key-history-stream" aria-live="polite">
+      <span class="tape-empty">Press any physical key on your keyboard to begin real-time diagnostics…</span>
+    </div>
+
+    <div class="keyboard-scroll-frame">
+      <div id="keyboard-mount"></div>
+    </div>
+
+    <div class="status-legend-bar">
+      <div>
+        <span class="legend-item"><i class="legend-swatch" style="background:var(--key-face)"></i>Untested</span>
+        <span class="legend-item"><i class="legend-swatch" style="background:var(--signal-active)"></i>Held Now</span>
+        <span class="legend-item"><i class="legend-swatch" style="background:var(--signal-pass)"></i>Verified</span>
+        <span class="legend-item"><i class="legend-swatch" style="background:var(--signal-fault)"></i>Chatter / Stuck</span>
+      </div>
+      <span>Browser-local processing · keystrokes never leave this device</span>
+    </div>
+
+    <!--AD_SLOT:mid_incontent-->
+
+    <div class="content-split-grid">
+      <article class="doc-section">
+        <h2>Why Use an Online Keyboard Tester for Mechanical &amp; Laptop Keyboards?</h2>
+        <p>Whether you just finished a hot-swap build, spilled liquid near a laptop palm rest, or keep losing inputs mid-match, an <strong>online keyboard tester</strong> verifies every switch matrix position in seconds without installing untrusted executables. KeyPulse reads raw hardware scan codes from the browser's <code>KeyboardEvent.code</code> rather than the typed character, so left and right modifiers stay distinct and Numpad digits never masquerade as the number row.</p>
+        <p>The bench tracks per-key actuation counts, peak simultaneous rollover, hold duration, and the time between release and the next press of the same key. Everything is rendered into the deck above and can be exported as a JSON or plain-text diagnostic report you can attach to a warranty ticket or a r/buildapc troubleshooting post.</p>
+
+        <h2>Testing N-Key Rollover (NKRO), Ghosting &amp; Matrix Blocking</h2>
+        <p>Budget membrane keyboards share rows without per-key diodes, so simultaneous presses collide into 2KRO or 6KRO behaviour. Hold several keys at once and watch the Rollover readout to confirm unlimited NKRO actuation. Pressing keys in a diagonal pattern quickly exposes ghosting on cheap controllers. For the theory behind the matrix, read <a href="/guides/nkro-vs-6kro-keyboard-ghosting-explained">NKRO vs. 6KRO keyboard ghosting</a>.</p>
+
+        <h2>Automatic Switch Chatter &amp; Double-Typing Detection</h2>
+        <p>Worn copper leaves and over-aggressive 1 ms debounce profiles cause a single press to fire twice within 5–30 ms. Every keycap carries a bounce monitor and actuation counter here; for per-event interval histograms and custom debounce thresholds open the dedicated <a href="/chatter-analyzer">switch chatter lab</a>. Keys held longer than four seconds trip the stuck-key watchdog so a failing switch or a jammed keycap is flagged before you finish a sentence.</p>
+
+        <h2>Scan Rate, Lock LEDs &amp; Key Location Readouts</h2>
+        <p>The scan-rate estimate samples timestamp deltas between consecutive discrete hardware events and snaps the fastest plausible interval to the standard USB HID buckets of 125 Hz, 250 Hz, 500 Hz, and 1000 Hz. It is an observed estimate from the browser event stream, not a USB descriptor read, but it reliably separates an aging membrane board from a gaming keyboard polling a full millisecond. The Caps, Num, and Scroll indicators mirror the OS lock state reported by the keyboard itself, and the location readout separates left-modifier, right-modifier, and Numpad variants that share a printed legend.</p>
+
+        <h2>Beyond the Keyboard: The Full Hardware Bench</h2>
+        <p>KeyPulse is deliberately not keyboard-only. The same zero-install approach powers a <a href="/gamepad-test">gamepad stick drift tester</a> for analog deadzones and rumble, a <a href="/display-test">monitor dead pixel and refresh-rate test</a>, a <a href="/audio-video-test">microphone, speaker, and webcam check</a>, a <a href="/mouse-cps-test">mouse polling-rate and CPS tester</a>, and a <a href="/typing-test">typing speed test</a> with a live GitHub corpus. Repair walk-throughs for each live in the <a href="/guides">hardware troubleshooting guides</a> library.</p>
+      </article>
+
+      <aside>
+        <div class="rail-box">
+          <h3>Diagnostic Suite</h3>
+          <ul>
+            <li><a href="/gamepad-test">Gamepad Drift &amp; Rumble Tester</a></li>
+            <li><a href="/display-test">Dead Pixel &amp; Refresh Hz Test</a></li>
+            <li><a href="/audio-video-test">Mic, Speaker &amp; Webcam Test</a></li>
+            <li><a href="/mouse-cps-test">Mouse Polling Hz &amp; CPS</a></li>
+            <li><a href="/chatter-analyzer">Switch Chatter Lab</a></li>
+            <li><a href="/typing-test">Typing Speed (WPM)</a></li>
+            <li><a href="/guides/how-to-fix-mechanical-keyboard-key-chatter">Fix Key Chatter Guide</a></li>
+            <li><a href="/guides/laptop-keyboard-keys-not-working-troubleshooting">Laptop Dead Key Checklist</a></li>
+          </ul>
+        </div>
+        <!--AD_SLOT:sidebar_rectangle-->
+      </aside>
     </div>
 
     <!--SEO_FAQ_SECTION-->
 
-    <div class="container">
-      <!--AD_SLOT:footer_multiplex-->
-    </div>
+    <!--AD_SLOT:footer_multiplex-->
+    <!--SITE_FOOTER-->
   </main>
+</div>
 
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-col">
-          <h4>KeyPulse Hardware Diagnostics</h4>
-          <p>Fast, privacy-first online keyboard tester, NKRO rollover verifier, mechanical switch chatter lab, WPM benchmark, and mouse diagnostic tools.</p>
-        </div>
-        <div class="footer-col">
-          <h4>Hardware Tools</h4>
-          <ul>
-            <li><a href="/">Online Keyboard Tester</a></li>
-            <li><a href="/typing-test">Typing Speed (WPM)</a></li>
-            <li><a href="/mouse-cps-test">Mouse &amp; CPS Tester</a></li>
-            <li><a href="/chatter-analyzer">Switch Chatter Lab</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h4>Guides &amp; SEO Resources</h4>
-          <ul>
-            <li><a href="/guides">All Hardware Guides</a></li>
-            <li><a href="/guides/how-to-fix-mechanical-keyboard-key-chatter">Fix Switch Chatter</a></li>
-            <li><a href="/guides/nkro-vs-6kro-keyboard-ghosting-explained">NKRO vs. 6KRO Guide</a></li>
-            <li><a href="/sitemap.xml">XML Sitemap</a></li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h4>Trust &amp; Policies</h4>
-          <ul>
-            <li><a href="/about">About KeyPulse</a></li>
-            <li><a href="/contact">Contact Us</a></li>
-            <li><a href="/privacy-policy">Privacy &amp; Cookie Policy</a></li>
-            <li><a href="/terms">Terms of Service</a></li>
-            <li><a href="#" id="btn-reopen-consent">Cookie Preferences</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <span>&copy; 2026 KeyPulse Hardware Diagnostics. All keystrokes stay 100% in your browser.</span>
-        <span><a href="/ads.txt">ads.txt</a> &bull; <a href="/robots.txt">robots.txt</a> &bull; <a href="/admin">Admin Login</a></span>
-      </div>
-    </div>
-  </footer>
-
-  <!--CONSENT_BANNER-->
-  <script src="/js/common.js" defer></script>
-  <script src="/js/keyboard.js" defer></script>
+<!--CONSENT_BANNER-->
+<script src="/js/common.js" defer></script>
+<script src="/js/keyboard.js" defer></script>
 </body>
 </html>

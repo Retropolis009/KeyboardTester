@@ -18,6 +18,9 @@ const router = express.Router();
 
 const ROUTE_VIEW_MAP = {
   '/': 'index.html',
+  '/gamepad-test': 'gamepad-test.html',
+  '/display-test': 'display-test.html',
+  '/audio-video-test': 'audio-video-test.html',
   '/typing-test': 'typing-test.html',
   '/mouse-cps-test': 'mouse-cps-test.html',
   '/chatter-analyzer': 'chatter-test.html',
