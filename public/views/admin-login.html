@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin Sign In | KeyPulse SEO &amp; AdSense Console</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="login-shell">
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="login-key">K</span>
+        <span>KeyPulse Admin Console</span>
+      </div>
+      <p style="color:var(--adm-muted);font-size:0.88rem;margin-top:0;margin-bottom:22px">
+        Sign in to manage Heavy SEO Tools, Google AdSense Revenue Slots, Hardware Guides, and Foreign APIs.
+      </p>
+
+      <form id="admin-login-form" autocomplete="on">
+        <div class="form-row">
+          <label for="login-username">Administrator Username</label>
+          <input type="text" id="login-username" name="username" required autocomplete="username" placeholder="admin" autofocus>
+        </div>
+
+        <div class="form-row">
+          <label for="login-password">
+            <span>Password</span>
+            <button type="button" id="btn-toggle-pw" style="background:none;border:none;color:var(--adm-cyan);cursor:pointer;font-size:0.76rem;padding:0">Show</button>
+          </label>
+          <input type="password" id="login-password" name="password" required autocomplete="current-password" placeholder="••••••••••••">
+        </div>
+
+        <div id="login-error" class="hidden" style="margin-bottom:14px;padding:9px 12px;border-radius:7px;background:rgba(244,63,94,0.16);border:1px solid rgba(244,63,94,0.4);color:#fecdd3;font-size:0.83rem" role="alert"></div>
+
+        <button type="submit" id="btn-login-submit" class="btn btn-primary" style="width:100%;padding:11px">
+          Sign In Securely
+        </button>
+      </form>
+
+      <div style="margin-top:18px;padding:10px 12px;border-radius:8px;background:var(--adm-bg);border:1px solid var(--adm-border);font-size:0.78rem;color:var(--adm-muted)">
+        <strong style="color:var(--adm-text)">Protected Session Notice:</strong> Brute-force lockout triggers after 6 failed attempts. Rotate bootstrap credentials anytime under <em>Security &amp; Sessions</em>.
+      </div>
+
+      <div style="margin-top:14px;text-align:center;font-size:0.82rem">
+        <a href="/">&larr; Return to Public Keyboard Tester</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const form = document.getElementById('admin-login-form');
+      const pwInput = document.getElementById('login-password');
+      const toggleBtn = document.getElementById('btn-toggle-pw');
+      const errBox = document.getElementById('login-error');
+      const submitBtn = document.getElementById('btn-login-submit');
+
+      toggleBtn.addEventListener('click', () => {
+        const isPw = pwInput.type === 'password';
+        pwInput.type = isPw ? 'text' : 'password';
+        toggleBtn.textContent = isPw ? 'Hide' : 'Show';
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errBox.classList.add('hidden');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Verifying Credentials...';
+
+        const username = document.getElementById('login-username').value.trim();
+        const password = pwInput.value;
+
+        try {
+          const res = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            errBox.textContent = data.error || 'Authentication failed.';
+            errBox.classList.remove('hidden');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Sign In Securely';
+            return;
+          }
+          window.location.href = '/admin';
+        } catch (_) {
+          errBox.textContent = 'Network error communicating with authentication server.';
+          errBox.classList.remove('hidden');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Sign In Securely';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

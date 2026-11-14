@@ -1,0 +1,30 @@
+{
+  "name": "keypulse-keyboard-tester",
+  "version": "1.0.0",
+  "description": "High-ranking SEO-optimized Keyboard Tester, Hardware Diagnostic Suite, AdSense Monetization Engine & Admin CMS",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node --use-system-ca --no-warnings=ExperimentalWarning server/index.js",
+    "dev": "node --watch --use-system-ca --no-warnings=ExperimentalWarning server/index.js",
+    "test": "node --use-system-ca --no-warnings=ExperimentalWarning tests/smoke.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Retropolis009/KeyboardTester.git"
+  },
+  "keywords": [
+    "keyboard-tester",
+    "nkro",
+    "key-chatter",
+    "typing-test",
+    "cps-test",
+    "seo",
+    "adsense"
+  ],
+  "license": "ISC",
+  "dependencies": {
+    "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0"
+  }
+}
