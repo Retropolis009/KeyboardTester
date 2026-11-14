@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>KeyPulse Admin — Heavy SEO, AdSense &amp; CMS Console</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div>
+        <div class="login-brand">
+          <span class="login-key">K</span>
+          <span>KeyPulse Admin</span>
+        </div>
+        <div style="font-size:0.76rem;color:var(--adm-muted)" id="adm-user-badge">Signed in</div>
+
+        <nav class="sidebar-nav" aria-label="Admin Sections">
+          <button type="button" class="side-tab-btn active" data-tab="overview">1. Search &amp; Revenue Overview</button>
+          <button type="button" class="side-tab-btn" data-tab="seo-suite">2. Heavy On-Page SEO &amp; SERP</button>
+          <button type="button" class="side-tab-btn" data-tab="tech-seo">3. Sitemap, Redirects &amp; IndexNow</button>
+          <button type="button" class="side-tab-btn" data-tab="monetization">4. Google AdSense &amp; Slots</button>
+          <button type="button" class="side-tab-btn" data-tab="cms">5. Guides &amp; Policy CMS</button>
+          <button type="button" class="side-tab-btn" data-tab="modules">6. Modules &amp; Foreign APIs</button>
+          <button type="button" class="side-tab-btn" data-tab="inbox">7. Contact Inbox <span id="badge-unread" class="score-pill score-good hidden">0</span></button>
+          <button type="button" class="side-tab-btn" data-tab="security">8. Security &amp; Login Audit</button>
+        </nav>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <a href="/" target="_blank" class="btn btn-sm">Open Live Website &nearr;</a>
+        <button type="button" id="btn-admin-logout" class="btn btn-sm btn-danger">Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <div>
+          <h1 style="margin:0;font-size:1.35rem" id="adm-page-heading">Search &amp; Revenue Command Overview</h1>
+          <span style="font-size:0.82rem;color:var(--adm-muted)">Real-time Google SEO diagnostics, AdSense monetization controls &amp; hardware tool management</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a href="/sitemap.xml" target="_blank" class="btn btn-sm">sitemap.xml</a>
+          <a href="/robots.txt" target="_blank" class="btn btn-sm">robots.txt</a>
+          <a href="/ads.txt" target="_blank" class="btn btn-sm">ads.txt</a>
+        </div>
+      </div>
+
+      <!-- TAB 1: OVERVIEW -->
+      <section id="tab-overview" class="tab-pane active">
+        <div class="kpi-grid" id="overview-kpi-grid"></div>
+
+        <div class="split-2">
+          <div class="panel-card">
+            <h3>Sitewide Route SEO Audit Scores (0–100)</h3>
+            <table class="adm-table">
+              <thead>
+                <tr>
+                  <th>Route</th>
+                  <th>Focus Keyword</th>
+                  <th>Words</th>
+                  <th>SEO Score</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="overview-seo-tbody"></tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="panel-card">
+              <h3>Real-User Core Web Vitals (Google Ranking Signals)</h3>
+              <table class="adm-table">
+                <thead>
+                  <tr><th>Metric</th><th>Average</th><th>Samples</th></tr>
+                </thead>
+                <tbody id="overview-cwv-tbody"></tbody>
+              </table>
+            </div>
+
+            <div class="panel-card">
+              <h3>Search Engine Crawler Activity</h3>
+              <table class="adm-table">
+                <thead>
+                  <tr><th>Bot User-Agent</th><th>Hits</th><th>Last Seen</th></tr>
+                </thead>
+                <tbody id="overview-bots-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: HEAVY ON-PAGE SEO & LIVE SERP -->
+      <section id="tab-seo-suite" class="tab-pane">
+        <div class="panel-card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <strong>Target Page Route:</strong>
+            <select id="seo-route-selector" style="background:var(--adm-bg);color:var(--adm-text);border:1px solid var(--adm-border);padding:8px 12px;border-radius:7px"></select>
+            <button type="button" id="btn-rerun-audit" class="btn btn-sm">Re-Run Live HTML Audit</button>
+          </div>
+          <div id="seo-active-score-badge"></div>
+        </div>
+
+        <div class="split-2">
+          <form id="seo-page-form" class="panel-card">
+            <h3>Metadata, Rich Schema &amp; Keyword Targeting</h3>
+
+            <div class="form-row">
+              <label><span>Route Path</span></label>
+              <input type="text" id="seo-route-path" readonly>
+            </div>
+            <div class="form-row">
+              <label><span>Internal Page Label</span></label>
+              <input type="text" id="seo-page-name" required>
+            </div>
+            <div class="form-row">
+              <label><span>Primary Focus Keyword (Google Rank Target)</span></label>
+              <input type="text" id="seo-focus-kw" placeholder="e.g. online keyboard tester">
+            </div>
+            <div class="form-row">
+              <label><span>Secondary / LSI Keywords (comma-separated)</span></label>
+              <input type="text" id="seo-sec-kw">
+            </div>
+            <div class="form-row">
+              <label>
+                <span>SEO Title Tag (&lt;title&gt;)</span>
+                <span id="seo-title-counter">0 / 65 chars</span>
+              </label>
+              <input type="text" id="seo-title" required>
+            </div>
+            <div class="form-row">
+              <label>
+                <span>Meta Description</span>
+                <span id="seo-desc-counter">0 / 160 chars</span>
+              </label>
+              <textarea id="seo-meta-desc" rows="3" required></textarea>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-row">
+                <label><span>Schema.org Primary Type</span></label>
+                <select id="seo-schema-type">
+                  <option value="WebApplication">WebApplication</option>
+                  <option value="SoftwareApplication">SoftwareApplication</option>
+                  <option value="CollectionPage">CollectionPage</option>
+                  <option value="AboutPage">AboutPage</option>
+                  <option value="ContactPage">ContactPage</option>
+                  <option value="WebPage">WebPage</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label><span>Robots Meta Directive</span></label>
+                <input type="text" id="seo-robots" value="index, follow, max-snippet:-1, max-image-preview:large">
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+              <div class="form-row">
+                <label><span>Sitemap Priority (0.1–1.0)</span></label>
+                <input type="number" id="seo-priority" step="0.1" min="0.1" max="1.0">
+              </div>
+              <div class="form-row">
+                <label><span>Changefreq</span></label>
+                <select id="seo-changefreq">
+                  <option value="daily">daily</option>
+                  <option value="weekly">weekly</option>
+                  <option value="monthly">monthly</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label><span>Include in Sitemap</span></label>
+                <select id="seo-in-sitemap">
+                  <option value="1">Yes (Indexable)</option>
+                  <option value="0">No</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label><span>Canonical URL Override (leave blank for automatic self-canonical)</span></label>
+              <input type="text" id="seo-canonical" placeholder="https://yourdomain.com/">
+            </div>
+
+            <div class="form-row">
+              <label><span>Open Graph Image Path / URL</span></label>
+              <input type="text" id="seo-og-image" placeholder="/og-banner.svg">
+            </div>
+
+            <div class="form-row">
+              <label><span>FAQPage Rich Snippet JSON Array ([{ "q": "...", "a": "..." }])</span></label>
+              <textarea id="seo-faq-json" class="mono" rows="6"></textarea>
+            </div>
+
+            <div class="form-row">
+              <label><span>Custom &lt;head&gt; HTML / Extra JSON-LD</span></label>
+              <textarea id="seo-custom-head" class="mono" rows="2"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save SEO Metadata &amp; Re-Audit Page</button>
+          </form>
+
+          <div>
+            <div class="panel-card">
+              <h3>Live Google Search (SERP) Snippet Simulator</h3>
+              <div class="serp-preview-box">
+                <div class="serp-site-line" id="serp-url-preview">https://keypulse.tools &rsaquo;</div>
+                <div class="serp-title-line" id="serp-title-preview">Online Keyboard Tester</div>
+                <div class="serp-desc-line" id="serp-desc-preview">Meta description preview...</div>
+              </div>
+              <div style="font-size:0.8rem;color:var(--adm-muted)" id="audit-summary-metrics"></div>
+            </div>
+
+            <div class="panel-card">
+              <h3>14-Point Technical &amp; Content SEO Audit</h3>
+              <ul class="audit-check-list" id="seo-audit-checklist"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: TECHNICAL SEO, REDIRECTS, SITEMAP & INDEXNOW -->
+      <section id="tab-tech-seo" class="tab-pane">
+        <div class="split-2">
+          <form id="global-seo-settings-form" class="panel-card">
+            <h3>Search Console Verification, Analytics &amp; Robots.txt</h3>
+            <div class="form-row">
+              <label><span>Site Brand Name</span></label>
+              <input type="text" id="set-site-name">
+            </div>
+            <div class="form-row">
+              <label><span>Canonical Production Domain (optional override, e.g. https://keypulse.com)</span></label>
+              <input type="text" id="set-base-url" placeholder="Auto-detected from request host when empty">
+            </div>
+            <div class="form-row">
+              <label><span>Google Search Console Verification Code (google-site-verification)</span></label>
+              <input type="text" id="set-gsc-code" placeholder="Paste token string from Google Search Console">
+            </div>
+            <div class="form-row">
+              <label><span>Bing Webmaster Verification Code (msvalidate.01)</span></label>
+              <input type="text" id="set-bing-code">
+            </div>
+            <div class="form-row">
+              <label><span>Google Analytics 4 Measurement ID (G-XXXXXXXXXX)</span></label>
+              <input type="text" id="set-ga4-id" placeholder="G-XXXXXXXXXX">
+            </div>
+            <div class="form-row">
+              <label><span>IndexNow Verification Key (served automatically at /&lt;key&gt;.txt)</span></label>
+              <input type="text" id="set-indexnow-key">
+            </div>
+            <div class="form-row">
+              <label><span>Dynamic /robots.txt Rules ({{BASE_URL}} resolves automatically)</span></label>
+              <textarea id="set-robots-txt" class="mono" rows="6"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button type="submit" class="btn btn-primary">Save Technical SEO Config</button>
+              <button type="button" id="btn-ping-indexnow" class="btn">Trigger IndexNow Instant Crawl Ping</button>
+            </div>
+            <p id="indexnow-result" style="font-size:0.8rem;color:var(--adm-cyan);margin-top:10px"></p>
+          </form>
+
+          <div class="panel-card">
+            <h3>301 / 302 SEO Link-Juice Redirect Manager</h3>
+            <form id="redirect-add-form" style="display:grid;grid-template-columns:1fr 1fr 90px auto;gap:8px;margin-bottom:16px">
+              <input type="text" id="red-from" placeholder="/old-url" required style="background:var(--adm-bg);border:1px solid var(--adm-border);color:var(--adm-text);padding:8px;border-radius:6px">
+              <input type="text" id="red-to" placeholder="/typing-test" required style="background:var(--adm-bg);border:1px solid var(--adm-border);color:var(--adm-text);padding:8px;border-radius:6px">
+              <select id="red-code" style="background:var(--adm-bg);border:1px solid var(--adm-border);color:var(--adm-text);padding:8px;border-radius:6px">
+                <option value="301">301</option>
+                <option value="302">302</option>
+              </select>
+              <button type="submit" class="btn btn-primary btn-sm">Add Rule</button>
+            </form>
+
+            <table class="adm-table">
+              <thead>
+                <tr><th>From Path</th><th>Destination</th><th>Code</th><th>Hits</th><th></th></tr>
+              </thead>
+              <tbody id="redirects-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: GOOGLE ADSENSE & MONETIZATION -->
+      <section id="tab-monetization" class="tab-pane">
+        <div class="panel-card">
+          <h3>Google AdSense Approval &amp; Policy Readiness Checklist</h3>
+          <ul class="audit-check-list" id="adsense-readiness-list"></ul>
+        </div>
+
+        <div class="split-2">
+          <form id="adsense-global-form" class="panel-card">
+            <h3>Global Google AdSense &amp; /ads.txt Configuration</h3>
+            <div class="form-row">
+              <label style="justify-content:flex-start;gap:8px;cursor:pointer;color:var(--adm-text)">
+                <input type="checkbox" id="ads-enabled"> Enable Sitewide Ad Rendering Engine
+              </label>
+            </div>
+            <div class="form-row">
+              <label><span>Google AdSense Publisher ID</span></label>
+              <input type="text" id="ads-pub-id" placeholder="ca-pub-1234567890123456">
+            </div>
+            <div class="form-row">
+              <label style="justify-content:flex-start;gap:8px;cursor:pointer;color:var(--adm-text)">
+                <input type="checkbox" id="ads-test-mode"> Preview / Layout Shield Mode (Keep ON until Google approves domain; turn OFF to serve live &lt;ins class="adsbygoogle"&gt; units)
+              </label>
+            </div>
+            <div class="form-row">
+              <label style="justify-content:flex-start;gap:8px;cursor:pointer;color:var(--adm-text)">
+                <input type="checkbox" id="ads-consent-banner"> Enable GDPR / CCPA Google Consent Mode v2 Banner
+              </label>
+            </div>
+            <div class="form-row">
+              <label>
+                <span>Root /ads.txt Authorized Seller File</span>
+                <button type="button" id="btn-sync-adstxt" style="background:none;border:none;color:var(--adm-cyan);cursor:pointer;font-size:0.76rem">Auto-Generate from Publisher ID</button>
+              </label>
+              <textarea id="ads-txt-editor" class="mono" rows="5"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Save AdSense &amp; /ads.txt Configuration</button>
+          </form>
+
+          <div class="panel-card">
+            <h3>Granular Ad Slot Placements &amp; Zero-CLS Shields</h3>
+            <div id="ad-slots-container" style="display:flex;flex-direction:column;gap:14px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: GUIDES & POLICY CMS -->
+      <section id="tab-cms" class="tab-pane">
+        <div class="split-2">
+          <div class="panel-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <h3 style="margin:0">SEO Hardware Guides (/guides/:slug)</h3>
+              <button type="button" id="btn-new-guide" class="btn btn-sm">+ New Guide</button>
+            </div>
+            <table class="adm-table">
+              <thead>
+                <tr><th>Title</th><th>Keyword</th><th>Views</th><th></th></tr>
+              </thead>
+              <tbody id="cms-guides-tbody"></tbody>
+            </table>
+          </div>
+
+          <form id="cms-guide-form" class="panel-card">
+            <h3 id="guide-form-heading">Create New SEO Hardware Guide</h3>
+            <input type="hidden" id="guide-id">
+            <div class="form-row">
+              <label><span>Article Title (H1)</span></label>
+              <input type="text" id="guide-title" required>
+            </div>
+            <div class="form-row">
+              <label><span>URL Slug (/guides/your-slug)</span></label>
+              <input type="text" id="guide-slug" required placeholder="mechanical-switch-lubing-guide">
+            </div>
+            <div class="form-row">
+              <label><span>Target Focus Keyword</span></label>
+              <input type="text" id="guide-kw" placeholder="lubing mechanical switches">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="form-row">
+                <label><span>Category</span></label>
+                <input type="text" id="guide-cat" value="Diagnostics">
+              </div>
+              <div class="form-row">
+                <label><span>Read Time (min)</span></label>
+                <input type="number" id="guide-mins" value="4" min="1">
+              </div>
+            </div>
+            <div class="form-row">
+              <label><span>Summary Excerpt &amp; Meta Description</span></label>
+              <textarea id="guide-excerpt" rows="2" required></textarea>
+            </div>
+            <div class="form-row">
+              <label><span>Semantic HTML Body (&lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, internal links)</span></label>
+              <textarea id="guide-html" class="mono" rows="7" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Publish / Save Guide</button>
+          </form>
+        </div>
+
+        <div class="panel-card">
+          <h3>AdSense Trust &amp; Legal Pages Editor (Privacy Policy, Terms, About, Contact)</h3>
+          <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center">
+            <label for="policy-selector" style="font-size:0.85rem">Select Page:</label>
+            <select id="policy-selector" style="background:var(--adm-bg);color:var(--adm-text);border:1px solid var(--adm-border);padding:7px 11px;border-radius:6px"></select>
+          </div>
+          <form id="policy-edit-form">
+            <div class="form-row">
+              <label><span>Page Title</span></label>
+              <input type="text" id="policy-title" required>
+            </div>
+            <div class="form-row">
+              <label><span>HTML Content</span></label>
+              <textarea id="policy-html" class="mono" rows="6" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Update Policy Page</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 6: FEATURE MODULES & FOREIGN APIS -->
+      <section id="tab-modules" class="tab-pane">
+        <div class="split-2">
+          <div class="panel-card">
+            <h3>Platform Tool Registry &amp; Navigation Control</h3>
+            <p style="font-size:0.82rem;color:var(--adm-muted);margin-top:0">Toggle diagnostic modules on/off or reorder navigation items as new tools are added.</p>
+            <div id="modules-list-container" style="display:flex;flex-direction:column;gap:12px"></div>
+          </div>
+
+          <div class="panel-card">
+            <h3>Foreign API Connectors &amp; External Webhooks</h3>
+            <p style="font-size:0.82rem;color:var(--adm-muted);margin-top:0">Manage external API feeds (GitHub Corpus API, IndexNow Search Ping, PageSpeed Insights, Hardware Feeds).</p>
+            <div id="external-apis-container" style="display:flex;flex-direction:column;gap:14px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 7: CONTACT INBOX -->
+      <section id="tab-inbox" class="tab-pane">
+        <div class="panel-card">
+          <h3>Visitor &amp; Advertiser Contact Messages</h3>
+          <table class="adm-table">
+            <thead>
+              <tr><th>Received</th><th>Sender</th><th>Topic</th><th>Message</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="inbox-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 8: SECURITY, PASSWORD & SESSIONS -->
+      <section id="tab-security" class="tab-pane">
+        <div class="split-2">
+          <form id="password-change-form" class="panel-card">
+            <h3>Rotate Administrator Password</h3>
+            <p style="font-size:0.82rem;color:var(--adm-muted);margin-top:0">Salted <code>crypto.scrypt</code> password hashing with timing-safe verification. Changing password automatically revokes other open sessions.</p>
+            <div class="form-row">
+              <label><span>Current Password</span></label>
+              <input type="password" id="sec-curr-pw" required autocomplete="current-password">
+            </div>
+            <div class="form-row">
+              <label><span>New Password (minimum 8 characters)</span></label>
+              <input type="password" id="sec-new-pw" required minlength="8" autocomplete="new-password">
+            </div>
+            <button type="submit" class="btn btn-primary">Update Password</button>
+          </form>
+
+          <div class="panel-card">
+            <h3>Active Admin Sessions</h3>
+            <table class="adm-table">
+              <thead>
+                <tr><th>Session</th><th>IP</th><th>Expires</th><th></th></tr>
+              </thead>
+              <tbody id="security-sessions-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel-card">
+          <h3>Authentication &amp; Rate-Limiter Audit Trail</h3>
+          <table class="adm-table">
+            <thead>
+              <tr><th>Timestamp (UTC)</th><th>Username</th><th>IP Address</th><th>Status</th><th>Detail</th></tr>
+            </thead>
+            <tbody id="security-logs-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="admin-toast" class="toast-banner hidden" role="status" aria-live="polite"></div>
+  <script src="/js/admin.js" defer></script>
+</body>
+</html>
