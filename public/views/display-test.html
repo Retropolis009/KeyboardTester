@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--SEO_HEAD-->
+</head>
+<body <!--BODY_ATTRS-->>
+<div class="app-shell">
+  <!--SIDEBAR_SHELL-->
+
+  <main class="app-workspace">
+    <div class="page-header">
+      <h1>Monitor Test Online — Dead Pixels, Refresh Rate Hz &amp; Contrast</h1>
+      <p>Cycle solid fullscreen colours to expose dead, stuck, and hot pixels, measure the real display refresh rate and frame pacing, then grade greyscale contrast and colour banding.</p>
+    </div>
+
+    <!--AD_SLOT:top_leaderboard-->
+
+    <div class="readout-grid">
+      <div class="readout-cell">
+        <span class="readout-label">Measured Refresh</span>
+        <span class="readout-val active" id="stat-display-hz">Measuring…</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Frame Time</span>
+        <span class="readout-val" id="stat-display-frame-ms">—</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Frame Pacing</span>
+        <span class="readout-val pass" id="stat-display-pacing">—</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Screen Resolution</span>
+        <span class="readout-val" id="stat-display-res">—</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Viewport</span>
+        <span class="readout-val" id="stat-display-viewport">—</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Pixel Ratio</span>
+        <span class="readout-val" id="stat-display-dpr">—</span>
+      </div>
+    </div>
+
+    <div class="control-bar">
+      <div class="control-inline-set">
+        <span style="font-size:0.82rem;color:var(--text-secondary)">Enter fullscreen, then press <kbd>Space</kbd> or click to advance colours. <kbd>Esc</kbd> exits.</span>
+      </div>
+      <div class="control-inline-set">
+        <button type="button" id="btn-display-fullscreen" class="btn btn-primary">Launch Fullscreen Pixel Test</button>
+        <button type="button" id="btn-display-hz" class="btn">Re-measure Hz</button>
+      </div>
+    </div>
+
+    <section class="bench-panel">
+      <h2 style="margin:0 0 6px;font-size:1rem">Solid Colour Pixel Check</h2>
+      <p style="margin:0;color:var(--text-secondary);font-size:0.86rem">Click a swatch to open that colour fullscreen. A dead pixel stays black on every colour; a stuck pixel shows one colour permanently; a hot pixel stays white.</p>
+      <div class="pixel-swatch-grid" id="pixel-swatch-grid"></div>
+    </section>
+
+    <div class="bench-grid-2">
+      <section class="bench-panel">
+        <h2 style="margin:0 0 6px;font-size:1rem">Greyscale Contrast Ramp</h2>
+        <p style="margin:0;color:var(--text-secondary);font-size:0.86rem">Every one of the 16 steps should be distinguishable from its neighbours. Crushed blacks at the left or clipped whites at the right mean gamma or contrast is misconfigured.</p>
+        <div class="grayscale-ramp" id="grayscale-ramp"></div>
+      </section>
+
+      <section class="bench-panel">
+        <h2 style="margin:0 0 6px;font-size:1rem">Colour Banding Ramp</h2>
+        <p style="margin:0;color:var(--text-secondary);font-size:0.86rem">Smooth gradients reveal 6-bit + FRC panels and aggressive compression. Visible stair-stepping at 8-bit is normal on gradients this narrow; harsh bands suggest dithering loss.</p>
+        <div class="grayscale-ramp" id="color-ramp" style="height:52px"></div>
+      </section>
+    </div>
+
+    <section class="bench-panel">
+      <h2 style="margin:0 0 6px;font-size:1rem">Frame Pacing Timeline</h2>
+      <p style="margin:0 0 10px;color:var(--text-secondary);font-size:0.86rem">Each bar is one rendered frame interval over the last ~5 seconds. Uniform bars mean stable VSync; tall spikes indicate a dropped frame or a background process stealing GPU time.</p>
+      <canvas id="frame-pacing-canvas" style="width:100%;height:110px;background:var(--bg-recessed);border:1px solid var(--border-line);display:block"></canvas>
+    </section>
+
+    <!--AD_SLOT:mid_incontent-->
+
+    <div class="content-split-grid">
+      <article class="doc-section">
+        <h2>How to Run a Dead Pixel Check on Any Monitor</h2>
+        <p>A <strong>monitor test online</strong> works because dead-pixel inspection only requires large, uniform fields of pure red, green, blue, black, and white. Clean the screen first — dust specks are the most common false positive — then display each solid colour fullscreen and scan in a slow raster pattern. A dead subpixel stays dark on red, green, and blue; a stuck subpixel stays lit on black.</p>
+        <p>Count the defects before contacting the manufacturer. Most warranties require three to five defective subpixels within the central zone, and some panel classes tolerate zero bright pixels but several dark ones. Photograph the screen at full brightness with the panel showing each solid colour so a support agent can verify the count.</p>
+
+        <h2>Measuring True Refresh Rate and Frame Pacing</h2>
+        <p>Advertised refresh rates are a maximum, not a guarantee. This bench timestamps consecutive <code>requestAnimationFrame</code> callbacks and reports both the median interval and the observed Hz. A 144&nbsp;Hz panel should land near 6.94&nbsp;ms per frame; a result stuck at 16.67&nbsp;ms usually means the browser is capped at 60&nbsp;Hz, the display cable is running an older HDMI mode, or Windows is set to 60&nbsp;Hz in Display Settings.</p>
+        <p>Frame pacing is the variance, not the average. Consistent 6.94&nbsp;ms intervals feel smooth even at lower rates; alternating 6&nbsp;ms and 12&nbsp;ms intervals at the same average feel stuttery. If the timeline shows regular tall bars, close background GPU consumers — a browser compositor thread or a screen recorder is often the culprit.</p>
+
+        <h2>Contrast, Gamma &amp; Colour Banding Checks</h2>
+        <p>The 16-step greyscale ramp should show sixteen distinct blocks. If the two darkest blocks merge, black crush is hiding shadow detail; if the two lightest merge, highlights are clipping. The colour ramp exposes dithering quality — a 6-bit panel with frame-rate control will show subtle noise, while a poorly implemented 6-bit panel shows hard bands. Compare results with the <a href="/gamepad-test">gamepad drift tester</a>, the <a href="/audio-video-test">microphone and webcam test</a>, and the <a href="/guides">hardware repair guides</a>.</p>
+      </article>
+
+      <aside>
+        <div class="rail-box">
+          <h3>Related Diagnostics</h3>
+          <ul>
+            <li><a href="/">Online Keyboard Tester</a></li>
+            <li><a href="/gamepad-test">Gamepad Drift Tester</a></li>
+            <li><a href="/audio-video-test">Mic, Speaker &amp; Webcam</a></li>
+            <li><a href="/mouse-cps-test">Mouse Polling Hz &amp; CPS</a></li>
+            <li><a href="/guides">Hardware Repair Guides</a></li>
+          </ul>
+        </div>
+        <!--AD_SLOT:sidebar_rectangle-->
+      </aside>
+    </div>
+
+    <!--SEO_FAQ_SECTION-->
+    <!--AD_SLOT:footer_multiplex-->
+    <!--SITE_FOOTER-->
+  </main>
+</div>
+
+<div id="pixel-fullscreen-stage" class="pixel-fullscreen-stage hidden" role="dialog" aria-label="Fullscreen pixel test">
+  <div class="pixel-stage-hud" id="pixel-stage-hud">Click or press Space for next colour · Esc to exit</div>
+</div>
+
+<!--CONSENT_BANNER-->
+<script src="/js/common.js" defer></script>
+<script src="/js/display.js" defer></script>
+</body>
+</html>

@@ -1,3 +1,4 @@
+require('./env');
 const fs = require('node:fs');
 const path = require('node:path');
 const express = require('express');
@@ -143,6 +144,24 @@ app.get('/mouse-cps-test', ensureModuleEnabled.bind(null, 'mouse_cps_test'), (re
 app.get('/chatter-analyzer', ensureModuleEnabled.bind(null, 'chatter_analyzer'), (req, res) => {
   trackPageRequest(req, '/chatter-analyzer');
   const html = renderTemplatePage({ viewFile: 'chatter-test.html', routePath: '/chatter-analyzer', req });
+  res.type('html').send(html);
+});
+
+app.get('/gamepad-test', ensureModuleEnabled.bind(null, 'gamepad_tester'), (req, res) => {
+  trackPageRequest(req, '/gamepad-test');
+  const html = renderTemplatePage({ viewFile: 'gamepad-test.html', routePath: '/gamepad-test', req });
+  res.type('html').send(html);
+});
+
+app.get('/display-test', ensureModuleEnabled.bind(null, 'display_tester'), (req, res) => {
+  trackPageRequest(req, '/display-test');
+  const html = renderTemplatePage({ viewFile: 'display-test.html', routePath: '/display-test', req });
+  res.type('html').send(html);
+});
+
+app.get('/audio-video-test', ensureModuleEnabled.bind(null, 'audio_video_tester'), (req, res) => {
+  trackPageRequest(req, '/audio-video-test');
+  const html = renderTemplatePage({ viewFile: 'audio-video-test.html', routePath: '/audio-video-test', req });
   res.type('html').send(html);
 });
 

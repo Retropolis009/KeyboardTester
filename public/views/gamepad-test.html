@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--SEO_HEAD-->
+</head>
+<body <!--BODY_ATTRS-->>
+<div class="app-shell">
+  <!--SIDEBAR_SHELL-->
+
+  <main class="app-workspace">
+    <div class="page-header">
+      <h1>Gamepad Tester Online — Stick Drift, Triggers &amp; Rumble</h1>
+      <p>Connect an Xbox, PlayStation DualSense/DualShock, Switch Pro, or generic XInput controller and press any button to wake the Gamepad API. Then inspect live analog drift, deadzones, triggers, and vibration.</p>
+    </div>
+
+    <!--AD_SLOT:top_leaderboard-->
+
+    <div class="control-bar">
+      <div class="control-inline-set">
+        <label for="select-gamepad">Controller</label>
+        <select id="select-gamepad" class="control-select">
+          <option value="">No controller detected — press a button</option>
+        </select>
+        <span id="gamepad-status" class="readout-label">Idle</span>
+      </div>
+      <div class="control-inline-set">
+        <label><input type="checkbox" id="chk-gp-deadzone" checked> Apply 0.08 deadzone to plots</label>
+        <button type="button" id="btn-gp-rumble" class="btn">Test Rumble</button>
+        <button type="button" id="btn-gp-reset" class="btn btn-danger">Reset Drift Log</button>
+      </div>
+    </div>
+
+    <div class="readout-grid">
+      <div class="readout-cell">
+        <span class="readout-label">Controller ID</span>
+        <span class="readout-val" id="stat-gp-id">Not connected</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Mapping</span>
+        <span class="readout-val" id="stat-gp-mapping">—</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Buttons Pressed</span>
+        <span class="readout-val active" id="stat-gp-buttons">0 / 0</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Left Stick Drift</span>
+        <span class="readout-val pass" id="stat-gp-left-drift">0.0%</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Right Stick Drift</span>
+        <span class="readout-val pass" id="stat-gp-right-drift">0.0%</span>
+      </div>
+      <div class="readout-cell">
+        <span class="readout-label">Max Drift Observed</span>
+        <span class="readout-val" id="stat-gp-max-drift">0.0%</span>
+      </div>
+    </div>
+
+    <div class="bench-grid-2">
+      <section class="bench-panel">
+        <h2 style="margin:0 0 12px;font-size:1rem">Left Analog Stick</h2>
+        <div class="stick-plotter-wrap">
+          <canvas id="canvas-left-stick" class="stick-canvas" width="360" height="360" aria-label="Left analog stick position plotter"></canvas>
+          <div>
+            <div class="readout-label">Raw X</div>
+            <div class="readout-val" id="stat-left-x">0.000</div>
+            <div class="readout-label" style="margin-top:8px">Raw Y</div>
+            <div class="readout-val" id="stat-left-y">0.000</div>
+            <div class="readout-label" style="margin-top:8px">Drift Radius</div>
+            <div class="readout-val" id="stat-left-radius">0.00%</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="bench-panel">
+        <h2 style="margin:0 0 12px;font-size:1rem">Right Analog Stick</h2>
+        <div class="stick-plotter-wrap">
+          <canvas id="canvas-right-stick" class="stick-canvas" width="360" height="360" aria-label="Right analog stick position plotter"></canvas>
+          <div>
+            <div class="readout-label">Raw X</div>
+            <div class="readout-val" id="stat-right-x">0.000</div>
+            <div class="readout-label" style="margin-top:8px">Raw Y</div>
+            <div class="readout-val" id="stat-right-y">0.000</div>
+            <div class="readout-label" style="margin-top:8px">Drift Radius</div>
+            <div class="readout-val" id="stat-right-radius">0.00%</div>
+          </div>
+        </div>
+        <p style="font-size:0.8rem;color:var(--text-dim);margin:10px 0 0">Do not touch the sticks while the drift baseline is being sampled. A healthy Hall-effect or potentiometer stick rests under 3% deflection; anything above 8% causes camera creep in most games.</p>
+      </section>
+    </div>
+
+    <section class="bench-panel">
+      <h2 style="margin:0 0 12px;font-size:1rem">Analog Triggers</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <div class="readout-label">L2 / LT — <span id="stat-lt-val">0%</span></div>
+          <div class="meter-track"><div class="meter-fill" id="meter-lt"></div></div>
+        </div>
+        <div>
+          <div class="readout-label">R2 / RT — <span id="stat-rt-val">0%</span></div>
+          <div class="meter-track"><div class="meter-fill" id="meter-rt"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="bench-panel">
+      <h2 style="margin:0 0 12px;font-size:1rem">Button Matrix</h2>
+      <div class="gp-btn-grid" id="gamepad-button-grid"></div>
+    </section>
+
+    <!--AD_SLOT:mid_incontent-->
+
+    <div class="content-split-grid">
+      <article class="doc-section">
+        <h2>How to Test Controller Stick Drift Online</h2>
+        <p>A browser-based <strong>gamepad tester online</strong> reads the HTML5 Gamepad API directly, which surfaces the exact normalized axis values the operating system sends to games. Stick drift appears as a non-zero resting radius: the plotter dot sits away from center even with your thumbs off the controller. Set the controller down on a flat surface, wait a few seconds for the baseline to settle, then read the drift percentage for each stick.</p>
+        <p>Potentiometer sticks typically begin drifting after 200–600 hours because carbon tracks wear where the wiper rests during idle menus. Hall-effect sticks are immune to mechanical wear but can still report drift when a magnet shifts or a firmware calibration table is lost.</p>
+
+        <h2>Deadzones, Triggers &amp; the Rumble Test</h2>
+        <p>Games apply a radial deadzone — commonly 0.10 to 0.20 — before treating stick input as intentional. The toggle above applies a 0.08 deadzone to the plots so you can see whether your drift would be masked by a typical in-game deadzone or whether it would leak through. Analog triggers should sweep smoothly from 0% to 100% with no dead zones at either end; a trigger that jumps from 0% to 40% needs cleaning or recalibration. The rumble button fires both the low-frequency and high-frequency actuators through the Gamepad Haptics actuator API where the browser and driver expose it.</p>
+
+        <h2>Buttons, Mapping &amp; Compatibility Notes</h2>
+        <p>The button matrix labels every reported index, so a controller that maps A to index 0 versus index 1 is immediately visible — useful when comparing a "standard mapping" Xbox pad to an unbranded DirectInput pad. PlayStation pads expose Cross/Circle/Square/Triangle as B/A/Y/X respectively. If nothing lights up, press a button on the controller first; browsers withhold gamepad data until a user gesture unlocks it. Pair related checks with the <a href="/mouse-cps-test">mouse polling tester</a>, the <a href="/display-test">monitor refresh-rate test</a>, or the <a href="/guides">hardware repair guides</a>.</p>
+      </article>
+
+      <aside>
+        <div class="rail-box">
+          <h3>Related Diagnostics</h3>
+          <ul>
+            <li><a href="/">Online Keyboard Tester</a></li>
+            <li><a href="/mouse-cps-test">Mouse Polling Hz &amp; CPS</a></li>
+            <li><a href="/display-test">Dead Pixel &amp; Refresh Hz</a></li>
+            <li><a href="/audio-video-test">Mic, Speaker &amp; Webcam</a></li>
+            <li><a href="/guides">Hardware Repair Guides</a></li>
+          </ul>
+        </div>
+        <!--AD_SLOT:sidebar_rectangle-->
+      </aside>
+    </div>
+
+    <!--SEO_FAQ_SECTION-->
+    <!--AD_SLOT:footer_multiplex-->
+    <!--SITE_FOOTER-->
+  </main>
+</div>
+
+<!--CONSENT_BANNER-->
+<script src="/js/common.js" defer></script>
+<script src="/js/gamepad.js" defer></script>
+</body>
+</html>
